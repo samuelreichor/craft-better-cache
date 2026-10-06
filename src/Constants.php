@@ -6,6 +6,9 @@ final class Constants
 {
     public const HANDLE = 'better-cache';
 
+    public const TABLE_PAGES = '{{%bettercache_pages}}';
+    public const TABLE_PAGE_TAGS = '{{%bettercache_pagetags}}';
+
     public const STORAGE_DRIVER_FILE = 'file';
     public const STORAGE_DRIVER_CRAFT_CACHE = 'craftCache';
     public const STORAGE_DRIVERS = [
