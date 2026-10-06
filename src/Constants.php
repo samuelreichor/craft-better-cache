@@ -27,6 +27,10 @@ final class Constants
 
     public const ALL_SITES_KEY = '*';
 
+    public const CACHE_FILE_NAME = 'index.html';
+    public const MUTEX_PREFIX = 'better-cache:';
+    public const MUTEX_TIMEOUT = 1;
+
     public const HTML_CONTENT_TYPE = 'text/html';
 
     public const MAX_URI_LENGTH = 2048;

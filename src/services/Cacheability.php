@@ -55,12 +55,12 @@ class Cacheability extends Component
             return false;
         }
 
-        if (!$response->getIsSuccessful() || $response->format !== Response::FORMAT_HTML) {
+        if (!$response->getIsSuccessful()) {
             return false;
         }
 
-        $contentType = $response->getHeaders()->get('Content-Type');
-        if ($contentType !== null && !str_contains($contentType, Constants::HTML_CONTENT_TYPE)) {
+        // Template responses have their own format, so rely on the header the formatters set while preparing.
+        if (!str_contains((string)$response->getHeaders()->get('Content-Type'), Constants::HTML_CONTENT_TYPE)) {
             return false;
         }
 

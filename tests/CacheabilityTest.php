@@ -227,8 +227,12 @@ class CacheabilityTest extends TestCase
     public function testNonHtmlResponseIsNotStored(): void
     {
         $json = $this->response();
-        $json->format = Response::FORMAT_JSON;
+        $json->getHeaders()->set('Content-Type', 'application/json; charset=UTF-8');
         $this->assertFalse($this->cacheability->isStorable($json));
+
+        $withoutContentType = $this->response();
+        $withoutContentType->getHeaders()->remove('Content-Type');
+        $this->assertFalse($this->cacheability->isStorable($withoutContentType));
 
         $xml = $this->response();
         $xml->getHeaders()->set('Content-Type', 'application/xml');
@@ -283,8 +287,8 @@ class CacheabilityTest extends TestCase
     private function response(string $body = '<html><body>Hi</body></html>', int $statusCode = 200): Response
     {
         $response = new Response();
-        $response->format = Response::FORMAT_HTML;
         $response->content = $body;
+        $response->getHeaders()->set('Content-Type', 'text/html; charset=UTF-8');
         $response->setStatusCode($statusCode);
 
         return $response;

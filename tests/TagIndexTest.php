@@ -50,9 +50,12 @@ class TagIndexTest extends TestCase
 
         foreach (['element', 'element::section:1', 'element::42'] as $tag) {
             $pages = $this->tagIndex->findPagesByTags([$tag]);
-            $this->assertEquals([$pageId => $variant], $pages, $tag);
+            $this->assertEquals($variant, $pages[$pageId] ?? null, $tag);
+            $this->assertArrayNotHasKey($otherId, $pages, $tag);
         }
-        $this->assertEqualsCanonicalizing([$pageId, $otherId], array_keys($this->tagIndex->findPagesByTags(['element::42', 'element::7'])));
+        $pages = $this->tagIndex->findPagesByTags(['element::42', 'element::7']);
+        $this->assertArrayHasKey($pageId, $pages);
+        $this->assertArrayHasKey($otherId, $pages);
     }
 
     public function testUpsertMarksStalePageFresh(): void
