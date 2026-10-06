@@ -29,6 +29,40 @@ composer require samuelreichor/craft-better-cache
 ./craft plugin/install better-cache
 ```
 
+## Server Configuration
+
+With the File storage driver, Cached Pages are written to `@webroot/cache/better-cache/{host}/{uri}/{query}/index.html` (see the `cachePath` setting). The web server serves them without booting Craft. Only GET requests are served from the cache; everything else falls through to Craft.
+
+### nginx
+
+Replace the `try_files` line of your `location /` block:
+
+```nginx
+set $better_cache_file /better-cache-miss;
+if ($request_method = GET) {
+    set $better_cache_file /cache/better-cache/$host/$uri/$args/index.html;
+}
+
+location / {
+    try_files $better_cache_file $uri $uri/ /index.php?$query_string;
+}
+```
+
+### Apache
+
+Add these rules to `web/.htaccess`, before Craft's own rewrite rules:
+
+```apache
+RewriteEngine On
+RewriteCond %{REQUEST_METHOD} GET
+RewriteCond %{DOCUMENT_ROOT}/cache/better-cache/%{HTTP_HOST}%{REQUEST_URI}/%{QUERY_STRING}/index.html -s
+RewriteRule .* /cache/better-cache/%{HTTP_HOST}%{REQUEST_URI}/%{QUERY_STRING}/index.html [L]
+```
+
+Apache's `%{HTTP_HOST}` keeps the port and letter case the client sent, so such requests fall through to Craft.
+
+If you change `cachePath`, adjust the paths above to match.
+
 ## Prior Art
 
 - [riasvdv/craft-static-cache](https://github.com/riasvdv/craft-static-cache) (Craft 6)
