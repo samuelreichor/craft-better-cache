@@ -6,12 +6,14 @@ use Craft;
 use craft\base\Model;
 use craft\base\Plugin;
 use samuelreichor\betterCache\models\Settings;
+use samuelreichor\betterCache\services\TagIndex;
 
 /**
  * Better Cache plugin
  *
  * @method static BetterCache getInstance()
  * @method Settings getSettings()
+ * @property-read TagIndex $tagIndex
  * @author Samuel Reichör <samuelreichor@gmail.com>
  * @copyright Samuel Reichör
  * @license https://craftcms.github.io/license/ Craft License
@@ -25,7 +27,7 @@ class BetterCache extends Plugin
     {
         return [
             'components' => [
-                // Define component configs here...
+                'tagIndex' => TagIndex::class,
             ],
         ];
     }
