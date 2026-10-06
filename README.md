@@ -28,3 +28,7 @@ composer require samuelreichor/craft-better-cache
 # tell Craft to install the plugin
 ./craft plugin/install better-cache
 ```
+
+## Prior Art
+
+- [riasvdv/craft-static-cache](https://github.com/riasvdv/craft-static-cache) (Craft 6)
