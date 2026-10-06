@@ -27,6 +27,21 @@ final class Constants
 
     public const ALL_SITES_KEY = '*';
 
+    public const HTML_CONTENT_TYPE = 'text/html';
+
+    public const MAX_URI_LENGTH = 2048;
+    public const NO_CACHE_PARAM = 'no-cache';
+    public const PREVIEW_PARAMS = ['x-craft-preview', 'x-craft-live-preview'];
+    public const TOKEN_HEADERS = ['X-Craft-Token', 'X-Craft-Site-Token'];
+    public const TRACKING_PARAMS = ['gclid', 'fbclid'];
+
+    // Transform URLs only resolve once, and two-step verification forms belong to one visitor.
+    public const UNCACHEABLE_BODY_MARKERS = [
+        'assets/generate-transform',
+        'auth-totp-code',
+        'auth-recovery-code',
+    ];
+
     // A fragment never reaches the server, so `#` cannot occur in a request URI.
     public const URI_PATTERN_DELIMITER = '#';
 }
