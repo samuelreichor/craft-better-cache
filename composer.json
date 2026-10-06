@@ -1,0 +1,48 @@
+{
+  "name": "samuelreichor/craft-better-cache",
+  "description": "Easy scalable static caching for Craft CMS",
+  "type": "craft-plugin",
+  "license": "proprietary",
+  "support": {
+    "email": "samuelreichor@gmail.com",
+    "issues": "https://github.com/samuelreichor/craft-better-cache/issues?state=open",
+    "source": "https://github.com/samuelreichor/craft-better-cache",
+    "docs": "https://github.com/samuelreichor/craft-better-cache",
+    "rss": "https://github.com/samuelreichor/craft-better-cache/releases.atom"
+  },
+  "require": {
+    "php": ">=8.2",
+    "craftcms/cms": "^5"
+  },
+  "require-dev": {
+    "craftcms/ecs": "dev-main",
+    "craftcms/phpstan": "dev-main"
+  },
+  "autoload": {
+    "psr-4": {
+      "samuelreichor\\betterCache\\": "src/"
+    }
+  },
+  "extra": {
+    "handle": "better-cache",
+    "name": "Better Cache",
+    "developer": "Samuel Reichör",
+    "documentationUrl": "https://github.com/samuelreichor/craft-better-cache",
+    "class": "samuelreichor\\betterCache\\BetterCache"
+  },
+  "scripts": {
+    "check-cs": "ecs check --ansi",
+    "fix-cs": "ecs check --ansi --fix",
+    "phpstan": "phpstan --memory-limit=1G"
+  },
+  "config": {
+    "sort-packages": true,
+    "platform": {
+      "php": "8.2"
+    },
+    "allow-plugins": {
+      "yiisoft/yii2-composer": true,
+      "craftcms/plugin-installer": true
+    }
+  }
+}
