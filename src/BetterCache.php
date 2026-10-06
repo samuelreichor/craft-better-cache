@@ -6,6 +6,7 @@ use Craft;
 use craft\base\Model;
 use craft\base\Plugin;
 use samuelreichor\betterCache\models\Settings;
+use samuelreichor\betterCache\services\Cacheability;
 use samuelreichor\betterCache\services\TagIndex;
 
 /**
@@ -13,6 +14,7 @@ use samuelreichor\betterCache\services\TagIndex;
  *
  * @method static BetterCache getInstance()
  * @method Settings getSettings()
+ * @property-read Cacheability $cacheability
  * @property-read TagIndex $tagIndex
  * @author Samuel Reichör <samuelreichor@gmail.com>
  * @copyright Samuel Reichör
@@ -27,6 +29,7 @@ class BetterCache extends Plugin
     {
         return [
             'components' => [
+                'cacheability' => Cacheability::class,
                 'tagIndex' => TagIndex::class,
             ],
         ];
