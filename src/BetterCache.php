@@ -50,7 +50,7 @@ class BetterCache extends Plugin
 
     protected function settingsHtml(): ?string
     {
-        return Craft::$app->view->renderTemplate('better-cache/_settings.twig', [
+        return Craft::$app->view->renderTemplate(Constants::HANDLE . '/_settings.twig', [
             'plugin' => $this,
             'settings' => $this->getSettings(),
         ]);
