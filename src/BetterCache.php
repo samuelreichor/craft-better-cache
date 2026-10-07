@@ -15,6 +15,7 @@ use samuelreichor\betterCache\models\Settings;
 use samuelreichor\betterCache\services\Cacheability;
 use samuelreichor\betterCache\services\Capture;
 use samuelreichor\betterCache\services\Invalidation;
+use samuelreichor\betterCache\services\ScheduledChanges;
 use samuelreichor\betterCache\services\TagIndex;
 use samuelreichor\betterCache\services\Warming;
 use yii\base\Event;
@@ -29,6 +30,7 @@ use yii\queue\Queue;
  * @property-read Cacheability $cacheability
  * @property-read Capture $capture
  * @property-read Invalidation $invalidation
+ * @property-read ScheduledChanges $scheduledChanges
  * @property-read TagIndex $tagIndex
  * @property-read Warming $warming
  * @author Samuel Reichör <samuelreichor@gmail.com>
@@ -49,6 +51,7 @@ class BetterCache extends Plugin
                 'cacheability' => Cacheability::class,
                 'capture' => Capture::class,
                 'invalidation' => Invalidation::class,
+                'scheduledChanges' => ScheduledChanges::class,
                 'tagIndex' => TagIndex::class,
                 'warming' => Warming::class,
             ],
