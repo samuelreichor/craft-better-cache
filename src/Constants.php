@@ -36,6 +36,10 @@ final class Constants
         'element::' . GlobalSet::class . '::*',
     ];
 
+    // Craft falls back to the element type wildcard when a query has no tags, so a query that can never
+    // return anything gets one that is never invalidated.
+    public const NO_ELEMENTS_TAG = 'element::none';
+
     // Makes the web server skip the Cached Page, so re-renders and warming reach Craft.
     public const BYPASS_HEADER = 'X-Better-Cache-Bypass';
 
