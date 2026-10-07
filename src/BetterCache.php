@@ -6,9 +6,11 @@ use Craft;
 use craft\base\Model;
 use craft\base\Plugin;
 use craft\events\InvalidateElementCachesEvent;
+use craft\events\RegisterCacheOptionsEvent;
 use craft\events\RegisterComponentTypesEvent;
 use craft\services\Elements;
 use craft\services\Utilities;
+use craft\utilities\ClearCaches;
 use craft\web\Request;
 use craft\web\Response;
 use craft\web\twig\variables\CraftVariable;
@@ -110,6 +112,14 @@ class BetterCache extends Plugin
     {
         Event::on(Utilities::class, Utilities::EVENT_REGISTER_UTILITIES, function(RegisterComponentTypesEvent $event) {
             $event->types[] = BetterCacheUtility::class;
+        });
+
+        Event::on(ClearCaches::class, ClearCaches::EVENT_REGISTER_CACHE_OPTIONS, function(RegisterCacheOptionsEvent $event) {
+            $event->options[] = [
+                'key' => Constants::HANDLE,
+                'label' => Craft::t(Constants::HANDLE, 'Better Cache pages'),
+                'action' => fn() => $this->invalidation->clearAll(),
+            ];
         });
 
         Event::on(CraftVariable::class, CraftVariable::EVENT_INIT, function(Event $event) {
