@@ -8,6 +8,7 @@ use craft\models\Site;
 use craft\web\Request;
 use craft\web\Response;
 use samuelreichor\betterCache\BetterCache;
+use samuelreichor\betterCache\jobs\InvalidateTagsJob;
 use samuelreichor\betterCache\models\Settings;
 use yii\db\Transaction;
 use yii\queue\PushEvent;
@@ -121,5 +122,19 @@ abstract class TestCase extends \PHPUnit\Framework\TestCase
         }
 
         return $jobs;
+    }
+
+    /**
+     * Flushes the buffered tags and runs the resulting invalidation job, like the queue would.
+     *
+     * @return array<mixed> the jobs the invalidation pushed, e.g. render jobs
+     */
+    protected function flushInvalidation(): array
+    {
+        $jobs = $this->capturePushedJobs(fn() => BetterCache::getInstance()->invalidation->flush());
+        $this->assertCount(1, $jobs);
+        $this->assertInstanceOf(InvalidateTagsJob::class, $jobs[0]);
+
+        return $this->capturePushedJobs(fn() => $jobs[0]->execute(Craft::$app->getQueue()));
     }
 }

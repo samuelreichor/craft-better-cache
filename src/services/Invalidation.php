@@ -5,6 +5,7 @@ namespace samuelreichor\betterCache\services;
 use Craft;
 use samuelreichor\betterCache\BetterCache;
 use samuelreichor\betterCache\Constants;
+use samuelreichor\betterCache\jobs\InvalidateTagsJob;
 use samuelreichor\betterCache\models\PageVariant;
 use Throwable;
 use yii\base\Application;
@@ -21,6 +22,7 @@ class Invalidation extends Component
 
     /**
      * Buffers the tags, since one save announces them several times (propagation, nested elements).
+     * They are resolved on the queue, so saving content does not wait for pages to be cleared or purged.
      *
      * @param string[] $tags
      */
@@ -44,6 +46,14 @@ class Invalidation extends Component
             return;
         }
 
+        Craft::$app->getQueue()->push(new InvalidateTagsJob(['tags' => $tags]));
+    }
+
+    /**
+     * @param string[] $tags
+     */
+    public function invalidateTags(array $tags): void
+    {
         // Re-renders go through the public URL, so the CDN has to forget the page before they run.
         $plugin = BetterCache::getInstance();
         if (array_intersect(Constants::ALL_PAGES_TAGS, $tags)) {
