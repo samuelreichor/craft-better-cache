@@ -16,7 +16,7 @@ class DynamicController extends Controller
 
     public function beforeAction($action): bool
     {
-        $this->response->getHeaders()->set('Cache-Control', Constants::NO_STORE_CACHE_CONTROL);
+        $this->response->getHeaders()->set(Constants::CACHE_CONTROL_HEADER, Constants::NO_STORE_CACHE_CONTROL);
 
         return parent::beforeAction($action);
     }

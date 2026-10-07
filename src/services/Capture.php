@@ -54,8 +54,8 @@ class Capture extends Component
         $this->addCdnHeaders($response, $tags);
         $this->stripCookies($response);
         $response->content = $plugin->dynamicContent->prepareForStorage((string)$response->content);
-        if ($response->getHeaders()->has('Content-Length')) {
-            $response->getHeaders()->set('Content-Length', (string)strlen($response->content));
+        if ($response->getHeaders()->has(Constants::CONTENT_LENGTH_HEADER)) {
+            $response->getHeaders()->set(Constants::CONTENT_LENGTH_HEADER, (string)strlen($response->content));
         }
 
         $mutex = Craft::$app->getMutex();
@@ -94,17 +94,17 @@ class Capture extends Component
         $response->format = Response::FORMAT_RAW;
         $response->content = $html;
         $headers = $response->getHeaders();
-        $headers->set('Content-Type', Constants::HTML_CONTENT_TYPE . '; charset=' . $response->charset);
+        $headers->set(Constants::CONTENT_TYPE_HEADER, Constants::HTML_CONTENT_TYPE . '; charset=' . $response->charset);
 
         // Craft adds these in handleRequest(), which a served page never reaches.
         $generalConfig = Craft::$app->getConfig()->getGeneral();
         if ($generalConfig->disallowRobots) {
-            $headers->set('X-Robots-Tag', 'none');
+            $headers->set(Constants::ROBOTS_HEADER, Constants::ROBOTS_NONE);
         }
         if ($generalConfig->sendPoweredByHeader) {
-            $headers->set('X-Powered-By', Craft::$app->name);
+            $headers->set(Constants::POWERED_BY_HEADER, Craft::$app->name);
         } else {
-            header_remove('X-Powered-By');
+            header_remove(Constants::POWERED_BY_HEADER);
         }
 
         // Logged-in visitors are served too, but must keep their session and identity cookies.
@@ -135,7 +135,7 @@ class Capture extends Component
     {
         $response->getCookies()->removeAll();
         // The session cookie is set by PHP itself, not through the response.
-        header_remove('Set-Cookie');
+        header_remove(Constants::SET_COOKIE_HEADER);
     }
 
     /**
