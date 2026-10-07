@@ -115,6 +115,25 @@ class TagIndex extends Component
         ];
     }
 
+    /**
+     * @return array<int, array{total: int, stale: int}> keyed by site ID
+     */
+    public function countPagesBySite(): array
+    {
+        $rows = (new Query())
+            ->select(['siteId', 'total' => 'COUNT(*)', 'stale' => 'SUM([[stale]])'])
+            ->from(Constants::TABLE_PAGES)
+            ->groupBy('siteId')
+            ->all();
+
+        $counts = [];
+        foreach ($rows as $row) {
+            $counts[(int)$row['siteId']] = ['total' => (int)$row['total'], 'stale' => (int)$row['stale']];
+        }
+
+        return $counts;
+    }
+
     public function findOldestUpdate(): ?DateTime
     {
         $date = (new Query())->from(Constants::TABLE_PAGES)->min('dateUpdated');

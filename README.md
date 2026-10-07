@@ -29,6 +29,16 @@ composer require samuelreichor/craft-better-cache
 ./craft plugin/install better-cache
 ```
 
+## Console Commands
+
+- `php craft better-cache/cache/invalidate` applies the refresh strategy to every cached page. Use it after deploys.
+- `php craft better-cache/cache/clear` deletes all cached pages and the tag index.
+- `php craft better-cache/cache/clear-url <url>` clears a single URL.
+- `php craft better-cache/cache/warm` queues a render of all live pages.
+- `php craft better-cache/cache/refresh-scheduled` updates pages whose entries reached their post or expiry date. Run it from cron, e.g. every minute.
+
+The same actions are available in the control panel under Utilities, Better Cache.
+
 ## Dynamic Content
 
 A cached page is the same for every visitor. Two things are filled in by a small inline script after the page loads:

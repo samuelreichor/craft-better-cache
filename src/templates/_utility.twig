@@ -1,0 +1,48 @@
+{% import '_includes/forms.twig' as forms %}
+
+<table class="data fullwidth">
+  <thead>
+    <tr>
+      <th>{{ 'Site'|t('better-cache') }}</th>
+      <th>{{ 'Cached pages'|t('better-cache') }}</th>
+      <th>{{ 'Stale pages'|t('better-cache') }}</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for site in sites %}
+      <tr>
+        <td>{{ site.name }}</td>
+        <td>{{ site.total }}</td>
+        <td>{{ site.stale }}</td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<hr>
+
+{% for action, label in {
+  invalidate: 'Invalidate all pages'|t('better-cache'),
+  warm: 'Warm the cache'|t('better-cache'),
+  clear: 'Clear the cache'|t('better-cache'),
+} %}
+  <form method="post" class="inline">
+    {{ csrfInput() }}
+    {{ actionInput(actions[action]) }}
+    <button type="submit" class="btn">{{ label }}</button>
+  </form>
+{% endfor %}
+
+<hr>
+
+<form method="post">
+  {{ csrfInput() }}
+  {{ actionInput(actions.clearUrl) }}
+  {{ forms.textField({
+    label: 'Clear a single URL'|t('better-cache'),
+    name: 'url',
+    type: 'url',
+    required: true,
+  }) }}
+  <button type="submit" class="btn">{{ 'Clear URL'|t('better-cache') }}</button>
+</form>
