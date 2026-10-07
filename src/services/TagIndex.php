@@ -4,7 +4,9 @@ namespace samuelreichor\betterCache\services;
 
 use Craft;
 use craft\db\Query;
+use craft\helpers\DateTimeHelper;
 use craft\helpers\Db;
+use DateTime;
 use samuelreichor\betterCache\Constants;
 use samuelreichor\betterCache\models\PageVariant;
 use yii\base\Component;
@@ -91,6 +93,13 @@ class TagIndex extends Component
     public function deletePages(array $pageIds): void
     {
         Db::delete(Constants::TABLE_PAGES, ['id' => $pageIds]);
+    }
+
+    public function findOldestUpdate(): ?DateTime
+    {
+        $date = (new Query())->from(Constants::TABLE_PAGES)->min('dateUpdated');
+
+        return $date ? DateTimeHelper::toDateTime($date) ?: null : null;
     }
 
     public function deleteAllPages(): void

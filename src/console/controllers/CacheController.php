@@ -57,4 +57,15 @@ class CacheController extends Controller
 
         return ExitCode::OK;
     }
+
+    /**
+     * Invalidates entries whose post or expiry date passed since the last run. Run it from cron.
+     */
+    public function actionRefreshScheduled(): int
+    {
+        $count = BetterCache::getInstance()->scheduledChanges->invalidatePassed();
+        $this->stdout("$count entries with passed dates invalidated.\n");
+
+        return ExitCode::OK;
+    }
 }
