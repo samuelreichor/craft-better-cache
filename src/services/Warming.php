@@ -47,7 +47,7 @@ class Warming extends Component
     private function push(array $pages): void
     {
         foreach (array_chunk($pages, Constants::RENDER_BATCH_SIZE, true) as $batch) {
-            Craft::$app->getQueue()->push(new RenderPagesJob(['pages' => $batch]));
+            BetterCache::getInstance()->getQueue()->push(new RenderPagesJob(['pages' => $batch]));
         }
     }
 
