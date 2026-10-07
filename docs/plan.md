@@ -47,7 +47,7 @@ Response:
 
 - Start collecting cache info before routing (on `EVENT_INIT`), and also call `collectCacheInfoForElement()` for the matched element, because Craft loads it before rendering starts.
 - Listen to `Elements::EVENT_INVALIDATE_CACHES`. One save fires it several times (propagation, nested elements), so buffer the tags per request and resolve them once at the end of the request.
-- Match tags exactly against the Tag Index. The bare `element` tag (Globals, Fields, Sites) affects every page.
+- Match tags exactly against the Tag Index. The tags in `Constants::ALL_PAGES_TAGS` affect every page: the bare `element` tag (Fields, Sites) and the GlobalSet tag, since global sets are memoized per request and pages may not carry their tags.
 - Keep the cacheability check and the strategy decision behind one seam so per-template overrides can be added later without restructuring.
 - Expire under the File driver: keep the file, mark the row stale, queue a re-render that replaces the file atomically (write to a temp file, then rename).
 
