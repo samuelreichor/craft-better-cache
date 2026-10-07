@@ -4,6 +4,9 @@ namespace samuelreichor\betterCache\tests;
 
 use Craft;
 use craft\db\Query;
+use craft\db\Table;
+use craft\helpers\Db;
+use DateTime;
 use samuelreichor\betterCache\BetterCache;
 use samuelreichor\betterCache\Constants;
 use samuelreichor\betterCache\models\PageVariant;
@@ -56,6 +59,15 @@ class TagIndexTest extends TestCase
         $pages = $this->tagIndex->findPagesByTags(['element::42', 'element::7']);
         $this->assertArrayHasKey($pageId, $pages);
         $this->assertArrayHasKey($otherId, $pages);
+    }
+
+    public function testPagesOfTrashedSitesAreIgnored(): void
+    {
+        $pageId = $this->tagIndex->upsertPage(new PageVariant($this->siteId, 'trashed'), ['element']);
+        Db::update(Table::SITES, ['dateDeleted' => Db::prepareDateForDb(new DateTime())], ['id' => $this->siteId], updateTimestamp: false);
+
+        $this->assertArrayNotHasKey($pageId, $this->tagIndex->findAllPages());
+        $this->assertArrayNotHasKey($pageId, $this->tagIndex->findPagesByTags(['element']));
     }
 
     public function testFindPageId(): void

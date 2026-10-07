@@ -85,5 +85,7 @@ Response:
 - `InvalidateTagsJob` does not split itself; this only matters at six-figure page counts.
 - The utility's rendering is not covered by automated tests (the console test app cannot render CP forms).
 - Pages served directly by nginx or Apache carry no CDN headers.
+- Changing a site's base URL leaves the files under the old host or path until `cache/clear`.
+- The per-page retry when a file cannot be deleted is only tested while the showcase has a site without a host.
 
 Tests use PHPUnit against the surrounding showcase install (`composer test` inside ddev).

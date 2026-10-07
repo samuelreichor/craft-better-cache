@@ -4,6 +4,7 @@ namespace samuelreichor\betterCache\services;
 
 use Craft;
 use craft\db\Query;
+use craft\db\Table;
 use craft\helpers\DateTimeHelper;
 use craft\helpers\Db;
 use DateTime;
@@ -146,11 +147,23 @@ class TagIndex extends Component
         Db::delete(Constants::TABLE_PAGES);
     }
 
+    /**
+     * @return array<int, PageVariant> keyed by page ID
+     */
+    public function findPagesBySite(int $siteId): array
+    {
+        return $this->toPages($this->pagesQuery()->where(['p.siteId' => $siteId])->all());
+    }
+
+    /**
+     * Pages of trashed sites are left out, since their files and URLs can no longer be resolved.
+     */
     private function pagesQuery(): Query
     {
         return (new Query())
             ->select(['p.id', 'p.siteId', 'p.path', 'p.query'])
-            ->from(['p' => Constants::TABLE_PAGES]);
+            ->from(['p' => Constants::TABLE_PAGES])
+            ->innerJoin(['s' => Table::SITES], '[[s.id]] = [[p.siteId]] AND [[s.dateDeleted]] IS NULL');
     }
 
     /**

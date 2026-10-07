@@ -117,6 +117,13 @@ class CdnTest extends TestCase
         $this->assertSame([['urls', [$url]], ['all', null]], RecordingPurger::$calls);
     }
 
+    public function testClearingASitePurgesEverything(): void
+    {
+        BetterCache::getInstance()->invalidation->clearSite($this->siteWithUrl()->id);
+
+        $this->assertSame([['all', null]], RecordingPurger::$calls);
+    }
+
     public function testStoredGuestRenderGetsPublicHeaders(): void
     {
         $response = $this->finishCapture('/cdn-test');

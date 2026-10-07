@@ -157,6 +157,27 @@ abstract class InvalidationTestCase extends TestCase
         $this->assertTrue($this->isStale('static'));
     }
 
+    public function testClearSiteRemovesOnlyThatSitesPages(): void
+    {
+        $otherSite = null;
+        foreach (Craft::$app->getSites()->getAllSites() as $site) {
+            if ($site->id !== $this->pages['blog']->siteId) {
+                $otherSite = $site;
+            }
+        }
+        if ($otherSite === null) {
+            $this->markTestSkipped('Needs a second site.');
+        }
+        $this->pages['other'] = new PageVariant($otherSite->id, 'other');
+        BetterCache::getInstance()->tagIndex->upsertPage($this->pages['other'], []);
+
+        BetterCache::getInstance()->invalidation->clearSite($this->pages['blog']->siteId);
+
+        $this->assertCleared('blog');
+        $this->assertCleared('static');
+        $this->assertTrue($this->isIndexed('other'));
+    }
+
     public function testBareElementTagClearsAllPages(): void
     {
         Craft::$app->getElements()->invalidateAllCaches();
