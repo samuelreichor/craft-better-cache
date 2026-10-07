@@ -135,6 +135,14 @@ Apache's `%{HTTP_HOST}` keeps the port and letter case the client sent, so such 
 
 If you change `cachePath`, adjust the paths above to match.
 
+## Switching from Blitz
+
+1. Translate the config: `php craft better-cache/blitz/config > config/better-cache.php`. Settings without a Better Cache counterpart are listed as comments at the top.
+2. Replace the template calls: `craft.blitz.includeDynamic('template', params)` becomes `craft.betterCache.include('template', params)`, and `craft.blitz.csrfInput()` becomes Craft's `csrfInput()`.
+3. If Blitz ran on its own queue, point Better Cache to it (see [Queue](#queue)).
+4. Swap the Blitz rewrite in the web server config for the snippet below.
+5. Uninstall Blitz, enable Better Cache and run `php craft better-cache/cache/warm`.
+
 ## Prior Art
 
 - [riasvdv/craft-static-cache](https://github.com/riasvdv/craft-static-cache) (Craft 6)
