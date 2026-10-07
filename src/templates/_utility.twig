@@ -1,5 +1,7 @@
 {% import '_includes/forms.twig' as forms %}
 
+<h2>{{ 'Cached Pages'|t('better-cache') }}</h2>
+
 <table class="data fullwidth">
   <thead>
     <tr>
@@ -19,30 +21,54 @@
   </tbody>
 </table>
 
-<hr>
-
-{% for action, label in {
-  invalidate: 'Invalidate all pages'|t('better-cache'),
-  warm: 'Warm the cache'|t('better-cache'),
-  clear: 'Clear the cache'|t('better-cache'),
+{% for action, section in {
+  invalidate: {
+    heading: 'Invalidate'|t('better-cache'),
+    instructions: 'Applies the refresh strategy to every cached page, like after a deploy.'|t('better-cache'),
+    button: 'Invalidate all pages'|t('better-cache'),
+  },
+  warm: {
+    heading: 'Warm'|t('better-cache'),
+    instructions: 'Queues a render of all live pages and every known page variant.'|t('better-cache'),
+    button: 'Warm the cache'|t('better-cache'),
+  },
+  clear: {
+    heading: 'Clear'|t('better-cache'),
+    instructions: 'Deletes all cached pages right away. Visitors render them again.'|t('better-cache'),
+    button: 'Clear the cache'|t('better-cache'),
+  },
 } %}
-  <form method="post" class="inline">
-    {{ csrfInput() }}
+  <hr>
+
+  <h2>{{ section.heading }}</h2>
+  <p>{{ section.instructions }}</p>
+
+  <form method="post" accept-charset="UTF-8">
     {{ actionInput(actions[action]) }}
-    <button type="submit" class="btn">{{ label }}</button>
+    {{ csrfInput() }}
+    <div class="buttons">
+      <button type="submit" class="btn submit secondary">{{ section.button }}</button>
+    </div>
   </form>
 {% endfor %}
 
 <hr>
 
-<form method="post">
-  {{ csrfInput() }}
+<h2>{{ 'Clear a Single URL'|t('better-cache') }}</h2>
+
+<form method="post" accept-charset="UTF-8">
   {{ actionInput(actions.clearUrl) }}
+  {{ csrfInput() }}
+
   {{ forms.textField({
-    label: 'Clear a single URL'|t('better-cache'),
+    label: 'URL'|t('better-cache'),
     name: 'url',
     type: 'url',
+    placeholder: siteUrl(''),
     required: true,
   }) }}
-  <button type="submit" class="btn">{{ 'Clear URL'|t('better-cache') }}</button>
+
+  <div class="buttons">
+    <button type="submit" class="btn submit secondary">{{ 'Clear URL'|t('better-cache') }}</button>
+  </div>
 </form>
