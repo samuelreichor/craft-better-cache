@@ -89,3 +89,25 @@ Response:
 - The per-page retry when a file cannot be deleted is only tested while the showcase has a site without a host.
 
 Tests use PHPUnit against the surrounding showcase install (`composer test` inside ddev).
+
+## Blitz parity
+
+Switching from Blitz should need no more than translating the config, replacing the `craft.blitz` template calls and swapping the server snippet.
+
+| Area | Decision |
+|---|---|
+| Queue | Plugin property `queue` (component ID, default `queue`), set like Blitz through `pluginConfigs` in `config/app.php`. Invalidation and render jobs go there. |
+| Unchanged and not live saves | Same rules as Blitz, without settings: a save is skipped when nothing changed (not first save, not deleted, same status per site, no dirty attributes or fields), or when the status did not change and is not live, active, enabled, pending or expired. The original status is read in `EVENT_BEFORE_SAVE_ELEMENT`. Only invalidations of an element that is being saved itself are skipped, so owners invalidated for a nested element still refresh. |
+| Query strings | `includedQueryParams` make a separate Page Variant, `excludedQueryParams` are ignored (default `gclid`, `fbclid`, `utm_.*`). Both are regexes on the param name, per site. Any other param makes the request uncacheable, unlike Blitz, which strips it and so lets a template that reads it poison the cache. Replaces `cacheQueryStrings`. |
+| Blitz config | `better-cache/blitz/config` reads `config/blitz.php` through Craft's config service (no Blitz install needed) and prints a `config/better-cache.php`, with unsupported settings as comments. A README section covers the remaining steps. |
+
+### Steps
+
+1. **Queue**: plugin property, used by `Invalidation` and `Warming`.
+   Verify: with `pluginConfigs` pointing to a second queue, jobs are pushed there.
+2. **Unchanged and not live saves**: before-save snapshot, skip in the invalidation handler.
+   Verify: unchanged save, disabled entry edit: no job. Title change, enable, disable, new, delete, nested entry change: job. In the bench, re-saving an article re-renders nothing.
+3. **Query strings**: settings, validation, `Cacheability`, CP settings, README.
+   Verify: included param gives its own variant, excluded param maps to the page without it, unknown param is not cached, param order does not matter.
+4. **Blitz config**: console command and README section.
+   Verify: a Blitz fixture config translates to the expected Better Cache config, including site handles, refresh modes and query params.
