@@ -43,6 +43,11 @@ final class Constants
     public const RENDER_BATCH_SIZE = 50;
     public const RENDER_TIMEOUT = 30;
 
+    // Clearing deletes the whole cache path, so it must not be one of these or a parent of them.
+    public const PROTECTED_ROOT_ALIASES = ['@webroot', '@root'];
+    // Their children are fine (e.g. @storage/better-cache), only the directories themselves are protected.
+    public const PROTECTED_PATH_ALIASES = ['@storage', '@config', '@templates', '@vendor', '@translations'];
+
     public const CACHE_FILE_NAME = 'index.html';
     public const LAST_SCHEDULED_CHECK_CACHE_KEY = self::HANDLE . ':lastScheduledCheck';
     public const MUTEX_PREFIX = self::HANDLE . ':';

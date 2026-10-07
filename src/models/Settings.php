@@ -53,7 +53,7 @@ class Settings extends Model
     public function validateCachePath(string $attribute): void
     {
         if (!CachePath::isSafe($this->$attribute)) {
-            $this->addError($attribute, Craft::t(Constants::HANDLE, 'The cache path must not be the webroot, the project root or a parent of them.'));
+            $this->addError($attribute, Craft::t(Constants::HANDLE, 'The cache path must not be the webroot, the project root, one of Craft’s own directories or a parent of them.'));
         }
     }
 
