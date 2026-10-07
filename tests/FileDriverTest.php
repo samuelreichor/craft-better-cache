@@ -30,6 +30,17 @@ class FileDriverTest extends TestCase
         $this->assertSame("$base/blog/a=1&page=2/index.html", $this->driver->getFilePath(new PageVariant($site->id, 'blog', 'a=1&page=2')));
     }
 
+    public function testDeleteAllRemovesEveryFile(): void
+    {
+        $siteId = $this->siteWithUrl()->id;
+        $this->driver->save(new PageVariant($siteId, 'a'), 'a');
+        $this->driver->save(new PageVariant($siteId, 'b', 'x=1'), 'b');
+
+        $this->driver->deleteAll();
+
+        $this->assertDirectoryDoesNotExist($this->cachePath);
+    }
+
     public function testSaveReplacesFileWithoutLeavingTempFiles(): void
     {
         $variant = new PageVariant($this->siteWithUrl()->id, 'blog');

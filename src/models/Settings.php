@@ -5,6 +5,7 @@ namespace samuelreichor\betterCache\models;
 use Craft;
 use craft\base\Model;
 use samuelreichor\betterCache\Constants;
+use samuelreichor\betterCache\helpers\CachePath;
 use samuelreichor\betterCache\helpers\UriPattern;
 
 /**
@@ -45,7 +46,15 @@ class Settings extends Model
             [['includedUriPatterns', 'excludedUriPatterns'], 'validateUriPatterns'],
             ['warmConcurrency', 'integer', 'min' => 1],
             ['cachePath', 'required'],
+            ['cachePath', 'validateCachePath'],
         ];
+    }
+
+    public function validateCachePath(string $attribute): void
+    {
+        if (!CachePath::isSafe($this->$attribute)) {
+            $this->addError($attribute, Craft::t(Constants::HANDLE, 'The cache path must not be the webroot, the project root or a parent of them.'));
+        }
     }
 
     public function validateUriPatterns(string $attribute): void

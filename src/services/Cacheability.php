@@ -41,12 +41,40 @@ class Cacheability extends Component
             return null;
         }
 
-        $query = $this->normalizeQuery($request);
+        $query = $this->normalizeQuery($request->getQueryParams());
         if ($query !== '' && !$this->settings()->cacheQueryStrings) {
             return null;
         }
 
         return new PageVariant($site->id, $path, $query);
+    }
+
+    /**
+     * Maps an absolute URL to its Page Variant without applying any cacheability rule.
+     */
+    public function getPageVariantForUrl(string $url): ?PageVariant
+    {
+        $urlWithoutQuery = $this->lowercaseHost((string)strtok($url, '?'));
+        $match = null;
+        foreach (Craft::$app->getSites()->getAllSites() as $site) {
+            $baseUrl = $this->lowercaseHost(rtrim((string)$site->getBaseUrl(), '/'));
+            if (
+                $baseUrl !== '' &&
+                str_starts_with($urlWithoutQuery . '/', $baseUrl . '/') &&
+                strlen($baseUrl) > strlen($match['baseUrl'] ?? '')
+            ) {
+                $match = ['site' => $site, 'baseUrl' => $baseUrl];
+            }
+        }
+
+        if ($match === null) {
+            return null;
+        }
+
+        parse_str((string)parse_url($url, PHP_URL_QUERY), $params);
+        $path = $this->getSitePath(trim(rawurldecode((string)parse_url($urlWithoutQuery, PHP_URL_PATH)), '/'), $match['site']);
+
+        return new PageVariant($match['site']->id, $path, $this->normalizeQuery($params));
     }
 
     public function getRefreshStrategy(PageVariant $variant): string
@@ -176,9 +204,11 @@ class Cacheability extends Component
         return false;
     }
 
-    private function normalizeQuery(Request $request): string
+    /**
+     * @param array<string, mixed> $params
+     */
+    public function normalizeQuery(array $params): string
     {
-        $params = $request->getQueryParams();
         $dropped = [...Constants::TRACKING_PARAMS, Craft::$app->getConfig()->getGeneral()->pathParam];
         foreach (array_filter($dropped) as $param) {
             unset($params[$param]);
@@ -186,6 +216,11 @@ class Cacheability extends Component
         ksort($params);
 
         return http_build_query($params);
+    }
+
+    private function lowercaseHost(string $url): string
+    {
+        return (string)preg_replace_callback('#^[a-z][a-z0-9+.-]*://[^/]*#i', fn(array $match) => strtolower($match[0]), $url);
     }
 
     private function settings(): Settings
