@@ -35,7 +35,7 @@ class Settings extends Model
 
     public int $warmConcurrency = 3;
 
-    public string $cachePath = '@webroot/cache/better-cache';
+    public string $cachePath = '@webroot/cache/' . Constants::HANDLE;
 
     public int $cdnMaxAge = Constants::DEFAULT_CDN_MAX_AGE;
 

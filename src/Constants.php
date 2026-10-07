@@ -73,6 +73,12 @@ final class Constants
     public const NO_STORE_CACHE_CONTROL = 'no-store, private';
 
     public const CACHE_CONTROL_HEADER = 'Cache-Control';
+    public const CONTENT_TYPE_HEADER = 'Content-Type';
+    public const CONTENT_LENGTH_HEADER = 'Content-Length';
+    public const SET_COOKIE_HEADER = 'Set-Cookie';
+    public const ROBOTS_HEADER = 'X-Robots-Tag';
+    public const ROBOTS_NONE = 'none';
+    public const POWERED_BY_HEADER = 'X-Powered-By';
     public const PUBLIC_CACHE_CONTROL = 'public, s-maxage=%d, max-age=0';
     public const PRIVATE_CACHE_CONTROL = 'private, no-cache';
     public const DEFAULT_CDN_MAX_AGE = 31536000;
