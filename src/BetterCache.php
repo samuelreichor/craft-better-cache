@@ -146,6 +146,9 @@ class BetterCache extends Plugin
         });
 
         Event::on(Elements::class, Elements::EVENT_INVALIDATE_CACHES, function(InvalidateElementCachesEvent $event) {
+            if (in_array(Constants::ORDER_TAG . '::*', $event->tags, true)) {
+                return;
+            }
             $this->invalidation->addTags($event->tags);
         });
 

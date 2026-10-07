@@ -215,6 +215,9 @@ class Capture extends Component
 
         [$dependency] = $elements->stopCollectingCacheInfo();
 
-        return $dependency->tags ?? [];
+        return array_values(array_filter(
+            $dependency->tags ?? [],
+            fn(string $tag) => !str_starts_with($tag, Constants::ORDER_TAG),
+        ));
     }
 }
