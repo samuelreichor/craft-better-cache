@@ -2,6 +2,8 @@
 
 namespace samuelreichor\betterCache;
 
+use craft\elements\GlobalSet;
+
 final class Constants
 {
     public const HANDLE = 'better-cache';
@@ -26,6 +28,13 @@ final class Constants
     ];
 
     public const ALL_SITES_KEY = '*';
+
+    // Craft announces the bare tag when fields or sites change. Global sets are memoized per request,
+    // so pages using them may not carry their tags.
+    public const ALL_PAGES_TAGS = [
+        'element',
+        'element::' . GlobalSet::class . '::*',
+    ];
 
     public const CACHE_FILE_NAME = 'index.html';
     public const MUTEX_PREFIX = 'better-cache:';

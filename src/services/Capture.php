@@ -45,18 +45,21 @@ class Capture extends Component
 
         $mutex = Craft::$app->getMutex();
         $lockName = Constants::MUTEX_PREFIX . $variant->siteId . ':' . $variant->getHash();
-        if (!$mutex->acquire($lockName, Constants::MUTEX_TIMEOUT)) {
-            return;
-        }
+        $locked = false;
 
         // The index row comes first: a row without a file heals on the next visit, a file without a row is never invalidated.
         try {
-            $plugin->tagIndex->upsertPage($variant, $tags);
-            $plugin->getStorageDriver()->save($variant, (string)$response->content);
+            $locked = $mutex->acquire($lockName, Constants::MUTEX_TIMEOUT);
+            if ($locked) {
+                $plugin->tagIndex->upsertPage($variant, $tags);
+                $plugin->getStorageDriver()->save($variant, (string)$response->content);
+            }
         } catch (Throwable $e) {
             Craft::warning("Could not store “{$variant->path}”: {$e->getMessage()}", Constants::HANDLE);
         } finally {
-            $mutex->release($lockName);
+            if ($locked) {
+                $mutex->release($lockName);
+            }
         }
     }
 

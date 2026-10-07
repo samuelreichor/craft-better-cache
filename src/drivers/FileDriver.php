@@ -24,7 +24,15 @@ class FileDriver implements StorageDriverInterface
         if (file_put_contents($tempFile, $html) === false) {
             throw new Exception("Could not write $tempFile");
         }
-        rename($tempFile, $file);
+        if (!rename($tempFile, $file)) {
+            FileHelper::unlink($tempFile);
+            throw new Exception("Could not move $tempFile to $file");
+        }
+    }
+
+    public function delete(PageVariant $variant): void
+    {
+        FileHelper::unlink($this->getFilePath($variant));
     }
 
     /**

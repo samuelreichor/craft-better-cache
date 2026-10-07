@@ -57,14 +57,42 @@ class TagIndex extends Component
      */
     public function findPagesByTags(array $tags): array
     {
-        $rows = (new Query())
-            ->select(['p.id', 'p.siteId', 'p.path', 'p.query'])
+        return $this->toPages($this->pagesQuery()
             ->distinct()
-            ->from(['p' => Constants::TABLE_PAGES])
             ->innerJoin(['t' => Constants::TABLE_PAGE_TAGS], '[[t.pageId]] = [[p.id]]')
             ->where(['t.tag' => $tags])
-            ->all();
+            ->all());
+    }
 
+    /**
+     * @return array<int, PageVariant> keyed by page ID
+     */
+    public function findAllPages(): array
+    {
+        return $this->toPages($this->pagesQuery()->all());
+    }
+
+    /**
+     * @param int[] $pageIds
+     */
+    public function deletePages(array $pageIds): void
+    {
+        Db::delete(Constants::TABLE_PAGES, ['id' => $pageIds]);
+    }
+
+    private function pagesQuery(): Query
+    {
+        return (new Query())
+            ->select(['p.id', 'p.siteId', 'p.path', 'p.query'])
+            ->from(['p' => Constants::TABLE_PAGES]);
+    }
+
+    /**
+     * @param array<array<string, mixed>> $rows
+     * @return array<int, PageVariant>
+     */
+    private function toPages(array $rows): array
+    {
         $pages = [];
         foreach ($rows as $row) {
             $pages[(int)$row['id']] = new PageVariant((int)$row['siteId'], $row['path'], $row['query']);
