@@ -9,16 +9,19 @@ use craft\events\InvalidateElementCachesEvent;
 use craft\services\Elements;
 use craft\web\Request;
 use craft\web\Response;
+use craft\web\twig\variables\CraftVariable;
 use samuelreichor\betterCache\drivers\CraftCacheDriver;
 use samuelreichor\betterCache\drivers\FileDriver;
 use samuelreichor\betterCache\drivers\StorageDriverInterface;
 use samuelreichor\betterCache\models\Settings;
 use samuelreichor\betterCache\services\Cacheability;
 use samuelreichor\betterCache\services\Capture;
+use samuelreichor\betterCache\services\DynamicContent;
 use samuelreichor\betterCache\services\Invalidation;
 use samuelreichor\betterCache\services\ScheduledChanges;
 use samuelreichor\betterCache\services\TagIndex;
 use samuelreichor\betterCache\services\Warming;
+use samuelreichor\betterCache\variables\BetterCacheVariable;
 use yii\base\Event;
 use yii\base\InvalidConfigException;
 use yii\queue\Queue;
@@ -30,6 +33,7 @@ use yii\queue\Queue;
  * @method Settings getSettings()
  * @property-read Cacheability $cacheability
  * @property-read Capture $capture
+ * @property-read DynamicContent $dynamicContent
  * @property-read Invalidation $invalidation
  * @property-read ScheduledChanges $scheduledChanges
  * @property-read TagIndex $tagIndex
@@ -49,6 +53,7 @@ class BetterCache extends Plugin
             'components' => [
                 'cacheability' => Cacheability::class,
                 'capture' => Capture::class,
+                'dynamicContent' => DynamicContent::class,
                 'invalidation' => Invalidation::class,
                 'scheduledChanges' => ScheduledChanges::class,
                 'tagIndex' => TagIndex::class,
@@ -97,6 +102,10 @@ class BetterCache extends Plugin
 
     private function attachEventHandlers(): void
     {
+        Event::on(CraftVariable::class, CraftVariable::EVENT_INIT, function(Event $event) {
+            $event->sender->set('betterCache', BetterCacheVariable::class);
+        });
+
         Event::on(Elements::class, Elements::EVENT_INVALIDATE_CACHES, function(InvalidateElementCachesEvent $event) {
             $this->invalidation->addTags($event->tags);
         });
