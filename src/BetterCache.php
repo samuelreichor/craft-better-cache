@@ -10,6 +10,7 @@ use craft\elements\Entry;
 use craft\events\DefineHtmlEvent;
 use craft\events\DefineValueEvent;
 use craft\events\DeleteSiteEvent;
+use craft\events\ElementEvent;
 use craft\events\InvalidateElementCachesEvent;
 use craft\events\RegisterCacheOptionsEvent;
 use craft\events\RegisterComponentTypesEvent;
@@ -29,6 +30,7 @@ use samuelreichor\betterCache\services\Cacheability;
 use samuelreichor\betterCache\services\Capture;
 use samuelreichor\betterCache\services\Cdn;
 use samuelreichor\betterCache\services\DynamicContent;
+use samuelreichor\betterCache\services\ElementChanges;
 use samuelreichor\betterCache\services\Invalidation;
 use samuelreichor\betterCache\services\ScheduledChanges;
 use samuelreichor\betterCache\services\TagIndex;
@@ -47,6 +49,7 @@ use yii\queue\Queue;
  * @method Settings getSettings()
  * @property-read Cacheability $cacheability
  * @property-read Capture $capture
+ * @property-read ElementChanges $elementChanges
  * @property-read Cdn $cdn
  * @property-read DynamicContent $dynamicContent
  * @property-read Invalidation $invalidation
@@ -74,6 +77,7 @@ class BetterCache extends Plugin
                 'cacheability' => Cacheability::class,
                 'capture' => Capture::class,
                 'cdn' => Cdn::class,
+                'elementChanges' => ElementChanges::class,
                 'dynamicContent' => DynamicContent::class,
                 'invalidation' => Invalidation::class,
                 'scheduledChanges' => ScheduledChanges::class,
@@ -156,8 +160,19 @@ class BetterCache extends Plugin
             $this->capture->defineQueryTags($event);
         });
 
+        Event::on(Elements::class, Elements::EVENT_BEFORE_SAVE_ELEMENT, function(ElementEvent $event) {
+            $this->elementChanges->beforeSave($event->element);
+        });
+
+        Event::on(Elements::class, Elements::EVENT_AFTER_SAVE_ELEMENT, function(ElementEvent $event) {
+            $this->elementChanges->afterSave($event->element);
+        });
+
         Event::on(Elements::class, Elements::EVENT_INVALIDATE_CACHES, function(InvalidateElementCachesEvent $event) {
-            if (in_array(Constants::ORDER_TAG . '::*', $event->tags, true)) {
+            if (
+                in_array(Constants::ORDER_TAG . '::*', $event->tags, true) ||
+                $this->elementChanges->canSkipInvalidation($event->element)
+            ) {
                 return;
             }
             $this->invalidation->addTags($event->tags);

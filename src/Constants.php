@@ -40,6 +40,9 @@ final class Constants
     // otherwise invalidate every page that shows a cart counter.
     public const ORDER_TAG = 'element::craft\commerce\elements\Order';
 
+    // Blitz's list: pending and expired pages must refresh to show or drop the element.
+    public const REFRESHABLE_STATUSES = ['live', 'active', 'enabled', 'pending', 'expired'];
+
     // Craft falls back to the element type wildcard when a query has no tags, so a query that can never
     // return anything gets one that is never invalidated.
     public const NO_ELEMENTS_TAG = 'element::none';
