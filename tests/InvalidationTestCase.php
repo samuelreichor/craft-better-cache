@@ -26,6 +26,7 @@ abstract class InvalidationTestCase extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        $this->settings()->enabled = true;
         $this->useTempCachePath();
         $this->settings()->storageDriver = $this->storageDriver();
         $this->settings()->refreshStrategy = Constants::REFRESH_STRATEGY_CLEAR;
