@@ -24,10 +24,11 @@ class Capture extends Component
         }
 
         if (!$request->getHeaders()->has(Constants::BYPASS_HEADER)) {
-            $html = $this->getCachedHtml($this->variant);
+            $variant = $this->variant;
+            $html = $this->getCachedHtml($variant);
             if ($html !== null) {
                 $this->variant = null;
-                $this->serve($html);
+                $this->serve($html, $variant);
             }
         }
 
@@ -46,9 +47,11 @@ class Capture extends Component
 
         $plugin = BetterCache::getInstance();
         if (!$plugin->cacheability->isStorable($response)) {
+            $this->addCdnHeaders($response, null);
             return;
         }
 
+        $this->addCdnHeaders($response, $tags);
         $this->stripCookies($response);
         $response->content = $plugin->dynamicContent->prepareForStorage((string)$response->content);
         if ($response->getHeaders()->has('Content-Length')) {
@@ -85,7 +88,7 @@ class Capture extends Component
         }
     }
 
-    private function serve(string $html): void
+    private function serve(string $html, PageVariant $variant): void
     {
         $response = Craft::$app->getResponse();
         $response->format = Response::FORMAT_RAW;
@@ -109,7 +112,23 @@ class Capture extends Component
             $this->stripCookies($response);
         }
 
+        $state = BetterCache::getInstance()->tagIndex->findPageState($variant);
+        $this->addCdnHeaders($response, $state !== null && !$state['stale'] ? $state['tags'] : null);
+
         Craft::$app->end();
+    }
+
+    /**
+     * @param string[]|null $tags null for a page a CDN must not keep, like a Stale Page
+     */
+    private function addCdnHeaders(Response $response, ?array $tags): void
+    {
+        $cdn = BetterCache::getInstance()->cdn;
+        if (!Craft::$app->getUser()->getIsGuest()) {
+            $cdn->addPrivateHeaders($response);
+        } elseif ($tags !== null) {
+            $cdn->addPublicHeaders($response, $tags);
+        }
     }
 
     private function stripCookies(Response $response): void

@@ -57,6 +57,17 @@ final class Constants
     public const SCRIPT_MARKER_ATTRIBUTE = 'data-better-cache-script';
     public const NO_STORE_CACHE_CONTROL = 'no-store, private';
 
+    public const CACHE_CONTROL_HEADER = 'Cache-Control';
+    public const PUBLIC_CACHE_CONTROL = 'public, s-maxage=%d, max-age=0';
+    public const PRIVATE_CACHE_CONTROL = 'private, no-cache';
+    public const DEFAULT_CDN_MAX_AGE = 31536000;
+    // Cloudflare's name. Fastly uses Surrogate-Key, Akamai Edge-Cache-Tag.
+    public const DEFAULT_CACHE_TAG_HEADER = 'Cache-Tag';
+    public const CDN_TAG_SEPARATOR = ',';
+    public const CDN_TAG_LENGTH = 12;
+    // Cloudflare's limit for the tag header.
+    public const MAX_CDN_TAG_HEADER_LENGTH = 16 * 1024;
+
     public const CACHE_FILE_NAME = 'index.html';
     public const CACHE_KEY_PREFIX = self::HANDLE . ':page:';
     public const CACHE_DEPENDENCY_TAG = self::HANDLE . ':pages';

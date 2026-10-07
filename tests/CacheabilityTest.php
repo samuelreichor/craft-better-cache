@@ -127,7 +127,12 @@ class CacheabilityTest extends TestCase
         Craft::$app->getUsers()->saveUserPreferences($admin, ['enableDebugToolbarForSite' => true]);
         Craft::$app->getUser()->setIdentity($admin);
 
-        $this->assertNull($this->cacheability->getPageVariant($this->request('/blog')));
+        try {
+            $this->assertNull($this->cacheability->getPageVariant($this->request('/blog')));
+        } finally {
+            // Craft memoizes preferences, so the rollback alone would leak them into later tests.
+            Craft::$app->getUsers()->saveUserPreferences($admin, ['enableDebugToolbarForSite' => false]);
+        }
     }
 
     /**
