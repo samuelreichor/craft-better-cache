@@ -89,6 +89,9 @@ final class Constants
     // Cloudflare's limit for the tag header.
     public const MAX_CDN_TAG_HEADER_LENGTH = 16 * 1024;
 
+    public const CACHED_COMMENT = '<!-- Cached by Better Cache on %s -->';
+    public const SERVED_COMMENT = '<!-- Served by Better Cache on %s -->';
+
     public const CACHE_FILE_NAME = 'index.html';
     public const CACHE_KEY_PREFIX = self::HANDLE . ':page:';
     public const CACHE_DEPENDENCY_TAG = self::HANDLE . ':pages';

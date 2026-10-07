@@ -29,6 +29,8 @@ composer require samuelreichor/craft-better-cache
 ./craft plugin/install better-cache
 ```
 
+Cached pages end with `<!-- Cached by Better Cache on … -->`. When PHP serves a cached page instead of the web server, `<!-- Served by Better Cache on … -->` follows it.
+
 ## Console Commands
 
 - `php craft better-cache/cache/invalidate` applies the refresh strategy to every cached page. Use it after deploys.
