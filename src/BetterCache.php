@@ -5,8 +5,10 @@ namespace samuelreichor\betterCache;
 use Craft;
 use craft\base\Model;
 use craft\base\Plugin;
+use craft\elements\db\ElementQuery;
 use craft\elements\Entry;
 use craft\events\DefineHtmlEvent;
+use craft\events\DefineValueEvent;
 use craft\events\DeleteSiteEvent;
 use craft\events\InvalidateElementCachesEvent;
 use craft\events\RegisterCacheOptionsEvent;
@@ -137,6 +139,10 @@ class BetterCache extends Plugin
 
         Event::on(CraftVariable::class, CraftVariable::EVENT_INIT, function(Event $event) {
             $event->sender->set('betterCache', BetterCacheVariable::class);
+        });
+
+        Event::on(ElementQuery::class, ElementQuery::EVENT_DEFINE_CACHE_TAGS, function(DefineValueEvent $event) {
+            $this->capture->defineQueryTags($event);
         });
 
         Event::on(Elements::class, Elements::EVENT_INVALIDATE_CACHES, function(InvalidateElementCachesEvent $event) {

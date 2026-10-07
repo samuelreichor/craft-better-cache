@@ -4,6 +4,9 @@ namespace samuelreichor\betterCache\services;
 
 use Craft;
 use craft\base\ElementInterface;
+use craft\elements\db\ElementQuery;
+use craft\events\DefineValueEvent;
+use craft\helpers\ArrayHelper;
 use craft\web\Request;
 use craft\web\Response;
 use DateTime;
@@ -78,6 +81,58 @@ class Capture extends Component
                 $mutex->release($lockName);
             }
         }
+    }
+
+    /**
+     * Relation field values restrict their query with a where condition instead of `id`, which Craft
+     * tags with the element type wildcard. That would put nearly every page under every save.
+     */
+    public function defineQueryTags(DefineValueEvent $event): void
+    {
+        if ($event->value) {
+            return;
+        }
+
+        /** @var ElementQuery $query */
+        $query = $event->sender;
+        $ids = $this->findFixedIds($query->where);
+        if ($ids === null) {
+            return;
+        }
+
+        $event->value = $ids
+            ? array_map(fn(int $id) => "element::$id", $ids)
+            : [Constants::NO_ELEMENTS_TAG];
+    }
+
+    /**
+     * @return int[]|null the IDs the condition limits the result to, or null if it does not
+     */
+    private function findFixedIds(mixed $condition): ?array
+    {
+        if (!is_array($condition)) {
+            return null;
+        }
+
+        if (is_string($condition[0] ?? null) && strtolower($condition[0]) === 'and') {
+            foreach (array_slice($condition, 1) as $operand) {
+                $ids = $this->findFixedIds($operand);
+                if ($ids !== null) {
+                    return $ids;
+                }
+            }
+            return null;
+        }
+
+        $ids = $condition['elements.id'] ?? null;
+        if (is_numeric($ids)) {
+            return [(int)$ids];
+        }
+        if (is_array($ids) && ArrayHelper::isNumeric($ids)) {
+            return array_map('intval', $ids);
+        }
+
+        return null;
     }
 
     private function getCachedHtml(PageVariant $variant): ?string
