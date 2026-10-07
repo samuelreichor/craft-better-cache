@@ -5,6 +5,8 @@ namespace samuelreichor\betterCache;
 use Craft;
 use craft\base\Model;
 use craft\base\Plugin;
+use craft\elements\Entry;
+use craft\events\DefineHtmlEvent;
 use craft\events\DeleteSiteEvent;
 use craft\events\InvalidateElementCachesEvent;
 use craft\events\RegisterCacheOptionsEvent;
@@ -19,6 +21,7 @@ use craft\web\twig\variables\CraftVariable;
 use samuelreichor\betterCache\drivers\CraftCacheDriver;
 use samuelreichor\betterCache\drivers\FileDriver;
 use samuelreichor\betterCache\drivers\StorageDriverInterface;
+use samuelreichor\betterCache\helpers\EntrySidebar;
 use samuelreichor\betterCache\models\Settings;
 use samuelreichor\betterCache\services\Cacheability;
 use samuelreichor\betterCache\services\Capture;
@@ -126,6 +129,10 @@ class BetterCache extends Plugin
 
         Event::on(Sites::class, Sites::EVENT_BEFORE_APPLY_SITE_DELETE, function(DeleteSiteEvent $event) {
             $this->invalidation->clearSite($event->site->id);
+        });
+
+        Event::on(Entry::class, Entry::EVENT_DEFINE_SIDEBAR_HTML, function(DefineHtmlEvent $event) {
+            $event->html .= EntrySidebar::html($event->sender);
         });
 
         Event::on(CraftVariable::class, CraftVariable::EVENT_INIT, function(Event $event) {

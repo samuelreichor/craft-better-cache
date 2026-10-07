@@ -20,7 +20,7 @@ Terms follow `CONTEXT.md`.
 | Dynamic content | CSRF inputs and the `csrf-token` meta tag become placeholders automatically when a page is stored (no helper), filled by one inline script from a CSRF endpoint. Dynamic Includes via `craft.betterCache.include()` with a signed payload. Always JS, for both drivers. |
 | CDN | `Cache-Control` and hashed cache tag headers, only when a purger is configured. `PurgerInterface` with `purgeTags`, `purgeUrls` and `purgeAll`; the CDN is purged before re-renders run. Stale pages get no public headers. No concrete CDN in v1. |
 | Enabling | `enabled` setting, set per environment through Craft's multi-environment config. |
-| CP | Utility page (counts per site, invalidate/clear/warm, single URL) plus an entry in Craft's "Clear Caches" that clears everything. |
+| CP | Utility page (counts per site, invalidate/clear/warm) plus an entry in Craft's "Clear Caches" that clears everything. A card in the entry sidebar shows the page's cache status and clears it. |
 | Server config | nginx/Apache snippets in the docs only. Without them, PHP serves cached pages early in the request. |
 | Out of v1 | Per-template overrides, concrete CDN purgers, deployers, cached includes, SSI/ESI, non-HTML responses. |
 

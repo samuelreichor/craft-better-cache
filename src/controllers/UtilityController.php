@@ -13,7 +13,7 @@ class UtilityController extends Controller
     public function beforeAction($action): bool
     {
         $this->requirePostRequest();
-        $this->requirePermission('utility:' . Constants::UTILITY_ID);
+        $this->requirePermission(Constants::UTILITY_PERMISSION);
 
         return parent::beforeAction($action);
     }
@@ -38,12 +38,10 @@ class UtilityController extends Controller
     {
         $url = $this->request->getRequiredBodyParam('url');
         if (!BetterCache::getInstance()->invalidation->clearUrl($url)) {
-            $this->setFailFlash(Craft::t(Constants::HANDLE, Constants::MESSAGE_NO_SITE_FOR_URL, ['url' => $url]));
-            return null;
+            return $this->asFailure(Craft::t(Constants::HANDLE, Constants::MESSAGE_NO_SITE_FOR_URL, ['url' => $url]));
         }
-        $this->setSuccessFlash(Craft::t(Constants::HANDLE, Constants::MESSAGE_URL_CLEARED, ['url' => $url]));
 
-        return $this->redirectToPostedUrl();
+        return $this->asSuccess(Craft::t(Constants::HANDLE, Constants::MESSAGE_URL_CLEARED, ['url' => $url]));
     }
 
     public function actionWarm(): ?Response
