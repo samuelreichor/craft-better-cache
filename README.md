@@ -33,6 +33,8 @@ composer require samuelreichor/craft-better-cache
 
 With the File storage driver, Cached Pages are written to `@webroot/cache/better-cache/{host}/{uri}/{query}/index.html` (see the `cachePath` setting). The web server serves them without booting Craft. Only GET requests are served from the cache; everything else falls through to Craft.
 
+The query string becomes a directory below the URI, so a cached `/blog/archive` is also served for `/blog?archive`.
+
 ### nginx
 
 Replace the `try_files` line of your `location /` block:
