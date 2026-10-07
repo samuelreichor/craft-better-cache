@@ -43,6 +43,24 @@ Invalidate, warm and clear are also available in the control panel under Utiliti
 
 `php craft clear-caches/all` also clears all cached pages, the tag index and (with a purger) the CDN. In deploy scripts, prefer `better-cache/cache/invalidate`.
 
+## Queue
+
+Invalidations and re-renders run as queue jobs on Craft's `queue` component. To keep them apart from other jobs, define a second queue in `config/app.php`, point Better Cache to it and run a worker for its channel:
+
+```php
+'components' => [
+    'betterCacheQueue' => [
+        'class' => craft\queue\Queue::class,
+        'channel' => 'better-cache',
+    ],
+    'plugins' => [
+        'pluginConfigs' => [
+            'better-cache' => ['queue' => 'betterCacheQueue'],
+        ],
+    ],
+],
+```
+
 ## Dynamic Content
 
 A cached page is the same for every visitor. Two things are filled in by a small inline script after the page loads:

@@ -46,7 +46,7 @@ class Invalidation extends Component
             return;
         }
 
-        Craft::$app->getQueue()->push(new InvalidateTagsJob(['tags' => $tags]));
+        BetterCache::getInstance()->getQueue()->push(new InvalidateTagsJob(['tags' => $tags]));
     }
 
     /**

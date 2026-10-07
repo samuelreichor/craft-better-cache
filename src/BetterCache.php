@@ -37,6 +37,7 @@ use samuelreichor\betterCache\utilities\BetterCacheUtility;
 use samuelreichor\betterCache\variables\BetterCacheVariable;
 use yii\base\Event;
 use yii\base\InvalidConfigException;
+use yii\di\Instance;
 use yii\queue\Queue;
 
 /**
@@ -60,6 +61,11 @@ class BetterCache extends Plugin
 {
     public string $schemaVersion = '1.0.0';
     public bool $hasCpSettings = true;
+
+    /**
+     * Set through `pluginConfigs` in `config/app.php`, like Blitz.
+     */
+    public Queue|array|string $queue = 'queue';
 
     public static function config(): array
     {
@@ -91,6 +97,11 @@ class BetterCache extends Plugin
                 $this->capture->start($request);
             }
         });
+    }
+
+    public function getQueue(): Queue
+    {
+        return Instance::ensure($this->queue, Queue::class);
     }
 
     public function getStorageDriver(): StorageDriverInterface
