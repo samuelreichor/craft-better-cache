@@ -14,6 +14,13 @@ use yii\base\InvalidConfigException;
 
 class FileDriver implements StorageDriverInterface
 {
+    public function get(PageVariant $variant): ?string
+    {
+        $file = $this->getFilePath($variant);
+
+        return is_file($file) ? (string)file_get_contents($file) : null;
+    }
+
     public function save(PageVariant $variant, string $html): void
     {
         $file = $this->getFilePath($variant);

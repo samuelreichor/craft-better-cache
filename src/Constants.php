@@ -49,6 +49,8 @@ final class Constants
     public const PROTECTED_PATH_ALIASES = ['@storage', '@config', '@templates', '@vendor', '@translations'];
 
     public const CACHE_FILE_NAME = 'index.html';
+    public const CACHE_KEY_PREFIX = self::HANDLE . ':page:';
+    public const CACHE_DEPENDENCY_TAG = self::HANDLE . ':pages';
     public const LAST_SCHEDULED_CHECK_CACHE_KEY = self::HANDLE . ':lastScheduledCheck';
     public const MUTEX_PREFIX = self::HANDLE . ':';
     public const MUTEX_TIMEOUT = 1;

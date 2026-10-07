@@ -8,23 +8,25 @@ use craft\elements\GlobalSet;
 use craft\db\Query;
 use samuelreichor\betterCache\BetterCache;
 use samuelreichor\betterCache\Constants;
-use samuelreichor\betterCache\drivers\FileDriver;
 use samuelreichor\betterCache\jobs\RenderPagesJob;
 use samuelreichor\betterCache\models\PageVariant;
 use yii\queue\ExecEvent;
 use yii\queue\Queue;
 
-class InvalidationTest extends TestCase
+abstract class InvalidationTestCase extends TestCase
 {
-    private const ENTRY = 'element::' . Entry::class;
+    protected const ENTRY = 'element::' . Entry::class;
 
     /** @var array<string, PageVariant> */
-    private array $pages = [];
+    protected array $pages = [];
+
+    abstract protected function storageDriver(): string;
 
     protected function setUp(): void
     {
         parent::setUp();
         $this->useTempCachePath();
+        $this->settings()->storageDriver = $this->storageDriver();
         $this->settings()->refreshStrategy = Constants::REFRESH_STRATEGY_CLEAR;
 
         $sections = Craft::$app->getEntries();
@@ -82,28 +84,7 @@ class InvalidationTest extends TestCase
         $this->assertKept('static');
     }
 
-    public function testBrokenPageDoesNotBlockOthers(): void
-    {
-        $siteWithoutHost = null;
-        foreach (Craft::$app->getSites()->getAllSites() as $site) {
-            if (!parse_url((string)$site->getBaseUrl(), PHP_URL_HOST)) {
-                $siteWithoutHost = $site;
-            }
-        }
-        if ($siteWithoutHost === null) {
-            $this->markTestSkipped('No site without a host to break the file path.');
-        }
-        $broken = new PageVariant($siteWithoutHost->id, 'broken');
-        $brokenId = BetterCache::getInstance()->tagIndex->upsertPage($broken, [self::ENTRY]);
-
-        BetterCache::getInstance()->invalidation->addTags([self::ENTRY]);
-        BetterCache::getInstance()->invalidation->flush();
-
-        $this->assertCleared('blog');
-        $this->assertArrayHasKey($brokenId, BetterCache::getInstance()->tagIndex->findAllPages());
-    }
-
-    public function testExpireKeepsFileMarksStaleAndQueuesRender(): void
+    public function testExpireKeepsPageMarksStaleAndQueuesRender(): void
     {
         $this->settings()->refreshStrategy = Constants::REFRESH_STRATEGY_EXPIRE;
 
@@ -115,24 +96,24 @@ class InvalidationTest extends TestCase
         $this->assertJobRenders($job, 'blog');
     }
 
-    public function testRefreshDeletesFileKeepsRowAndQueuesRender(): void
+    public function testRefreshDeletesPageKeepsRowAndQueuesRender(): void
     {
         $this->settings()->refreshStrategy = Constants::REFRESH_STRATEGY_REFRESH;
 
         $job = $this->invalidateAndCaptureJob([self::ENTRY . '::section:' . Craft::$app->getEntries()->getSectionByHandle('blog')->id]);
 
-        $this->assertFileDoesNotExist($this->filePath('blog'));
+        $this->assertFalse($this->isStored('blog'));
         $this->assertTrue($this->isIndexed('blog'));
         $this->assertKept('news');
         $this->assertJobRenders($job, 'blog');
     }
 
-    public function testClearAllRemovesRowsAndFiles(): void
+    public function testClearAllRemovesRowsAndPages(): void
     {
         BetterCache::getInstance()->invalidation->clearAll();
 
         $this->assertSame([], BetterCache::getInstance()->tagIndex->findAllPages());
-        $this->assertFileDoesNotExist($this->filePath('static'));
+        $this->assertFalse($this->isStored('static'));
     }
 
     public function testClearUrlRemovesOnlyThatPage(): void
@@ -222,25 +203,25 @@ class InvalidationTest extends TestCase
         $this->pages[$variant->path] = $variant;
     }
 
-    private function assertCleared(string $path): void
+    protected function assertCleared(string $path): void
     {
         $this->assertFalse($this->isIndexed($path), "$path is still indexed");
-        $this->assertFileDoesNotExist($this->filePath($path));
+        $this->assertFalse($this->isStored($path), "$path is still stored");
     }
 
-    private function assertKept(string $path): void
+    protected function assertKept(string $path): void
     {
         $this->assertTrue($this->isIndexed($path), "$path is not indexed");
-        $this->assertFileExists($this->filePath($path));
+        $this->assertTrue($this->isStored($path), "$path is not stored");
     }
 
-    private function isIndexed(string $path): bool
+    private function isStored(string $path): bool
+    {
+        return BetterCache::getInstance()->getStorageDriver()->get($this->pages[$path]) !== null;
+    }
+
+    protected function isIndexed(string $path): bool
     {
         return in_array($this->pages[$path], BetterCache::getInstance()->tagIndex->findAllPages());
-    }
-
-    private function filePath(string $path): string
-    {
-        return (new FileDriver())->getFilePath($this->pages[$path]);
     }
 }

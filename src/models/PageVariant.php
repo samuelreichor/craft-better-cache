@@ -11,6 +11,11 @@ final class PageVariant
     ) {
     }
 
+    public function getKey(): string
+    {
+        return $this->siteId . ':' . $this->getHash();
+    }
+
     public function getHash(): string
     {
         return sha1($this->path . '?' . $this->query);
