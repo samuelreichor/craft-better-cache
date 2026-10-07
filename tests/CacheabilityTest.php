@@ -7,6 +7,7 @@ use craft\elements\User;
 use craft\web\Response;
 use PHPUnit\Framework\Attributes\DataProvider;
 use samuelreichor\betterCache\BetterCache;
+use samuelreichor\betterCache\models\PageVariant;
 use samuelreichor\betterCache\models\Settings;
 use samuelreichor\betterCache\services\Cacheability;
 
@@ -193,6 +194,20 @@ class CacheabilityTest extends TestCase
         $variant = $this->cacheability->getPageVariant($this->request('/blog?gclid=abc&fbclid=def'));
 
         $this->assertSame('', $variant?->query);
+    }
+
+    public function testUrlMapsToPageVariant(): void
+    {
+        $site = $this->siteWithUrl();
+        $baseUrl = rtrim((string)$site->getBaseUrl(), '/');
+
+        $variant = $this->cacheability->getPageVariantForUrl("$baseUrl/blog/p2?page=2&a=1&gclid=x");
+
+        $this->assertEquals(new PageVariant($site->id, 'blog/p2', 'a=1&page=2'), $variant);
+        $this->assertSame('', $this->cacheability->getPageVariantForUrl("$baseUrl/")?->path);
+        $this->assertNull($this->cacheability->getPageVariantForUrl('https://unknown.example/blog'));
+        $upperHost = preg_replace_callback('#^https?://[^/]+#', fn(array $m) => strtoupper($m[0]), $baseUrl);
+        $this->assertSame('blog', $this->cacheability->getPageVariantForUrl("$upperHost/blog")?->path);
     }
 
     public function testStorableResponse(): void

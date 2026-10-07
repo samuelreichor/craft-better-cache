@@ -19,24 +19,18 @@ class TagIndex extends Component
      */
     public function upsertPage(PageVariant $variant, array $tags): int
     {
-        $hash = $variant->getHash();
-
-        return Craft::$app->getDb()->transaction(function() use ($variant, $hash, $tags): int {
+        return Craft::$app->getDb()->transaction(function() use ($variant, $tags): int {
             Db::upsert(Constants::TABLE_PAGES, [
                 'siteId' => $variant->siteId,
                 'path' => $variant->path,
                 'query' => $variant->query,
-                'variantHash' => $hash,
+                'variantHash' => $variant->getHash(),
                 'stale' => false,
             ], [
                 'stale' => false,
             ]);
 
-            $pageId = (int)(new Query())
-                ->select('id')
-                ->from(Constants::TABLE_PAGES)
-                ->where(['siteId' => $variant->siteId, 'variantHash' => $hash])
-                ->scalar();
+            $pageId = (int)$this->findPageId($variant);
 
             Db::delete(Constants::TABLE_PAGE_TAGS, ['pageId' => $pageId]);
             if ($tags) {
@@ -64,6 +58,17 @@ class TagIndex extends Component
             ->all());
     }
 
+    public function findPageId(PageVariant $variant): ?int
+    {
+        $id = (new Query())
+            ->select('id')
+            ->from(Constants::TABLE_PAGES)
+            ->where(['siteId' => $variant->siteId, 'variantHash' => $variant->getHash()])
+            ->scalar();
+
+        return $id === false ? null : (int)$id;
+    }
+
     /**
      * @return array<int, PageVariant> keyed by page ID
      */
@@ -86,6 +91,11 @@ class TagIndex extends Component
     public function deletePages(array $pageIds): void
     {
         Db::delete(Constants::TABLE_PAGES, ['id' => $pageIds]);
+    }
+
+    public function deleteAllPages(): void
+    {
+        Db::delete(Constants::TABLE_PAGES);
     }
 
     private function pagesQuery(): Query

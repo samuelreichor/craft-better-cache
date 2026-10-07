@@ -52,9 +52,9 @@ class WarmingTest extends TestCase
     {
         $this->settings()->includedUriPatterns = [];
 
-        foreach ($this->warmedPages() as [$pageId]) {
-            $this->assertNotNull($pageId);
-        }
+        $unindexed = array_filter($this->warmedPages(), fn(array $page) => $page[0] === null);
+
+        $this->assertSame([], $unindexed);
     }
 
     /**

@@ -58,6 +58,15 @@ class TagIndexTest extends TestCase
         $this->assertArrayHasKey($otherId, $pages);
     }
 
+    public function testFindPageId(): void
+    {
+        $variant = new PageVariant($this->siteId, 'blog', 'page=2');
+        $pageId = $this->tagIndex->upsertPage($variant, []);
+
+        $this->assertSame($pageId, $this->tagIndex->findPageId($variant));
+        $this->assertNull($this->tagIndex->findPageId(new PageVariant($this->siteId, 'blog', 'page=3')));
+    }
+
     public function testUpsertMarksStalePageFresh(): void
     {
         $variant = new PageVariant($this->siteId, 'blog');

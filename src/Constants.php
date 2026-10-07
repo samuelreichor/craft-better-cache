@@ -44,7 +44,7 @@ final class Constants
     public const RENDER_TIMEOUT = 30;
 
     public const CACHE_FILE_NAME = 'index.html';
-    public const MUTEX_PREFIX = 'better-cache:';
+    public const MUTEX_PREFIX = self::HANDLE . ':';
     public const MUTEX_TIMEOUT = 1;
 
     public const HTML_CONTENT_TYPE = 'text/html';

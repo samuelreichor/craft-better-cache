@@ -75,6 +75,48 @@ class Invalidation extends Component
     }
 
     /**
+     * @return int the number of invalidated pages
+     */
+    public function invalidateAll(): int
+    {
+        $pages = BetterCache::getInstance()->tagIndex->findAllPages();
+        $this->apply($pages);
+
+        return count($pages);
+    }
+
+    /**
+     * Removes all stored files, including ones the Tag Index does not know.
+     */
+    public function clearAll(): void
+    {
+        $plugin = BetterCache::getInstance();
+        $plugin->getStorageDriver()->deleteAll();
+        $plugin->tagIndex->deleteAllPages();
+    }
+
+    /**
+     * @return bool whether the URL belongs to a site
+     */
+    public function clearUrl(string $url): bool
+    {
+        $plugin = BetterCache::getInstance();
+        $variant = $plugin->cacheability->getPageVariantForUrl($url);
+        if ($variant === null) {
+            return false;
+        }
+
+        $pageId = $plugin->tagIndex->findPageId($variant);
+        if ($pageId === null) {
+            $plugin->getStorageDriver()->delete($variant);
+        } else {
+            $this->clear([$pageId => $variant]);
+        }
+
+        return true;
+    }
+
+    /**
      * @param array<int, PageVariant> $pages keyed by page ID
      */
     public function clear(array $pages): void

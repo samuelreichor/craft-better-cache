@@ -3,11 +3,11 @@
 namespace samuelreichor\betterCache\drivers;
 
 use Craft;
-use craft\helpers\App;
 use craft\helpers\FileHelper;
 use craft\helpers\StringHelper;
 use samuelreichor\betterCache\BetterCache;
 use samuelreichor\betterCache\Constants;
+use samuelreichor\betterCache\helpers\CachePath;
 use samuelreichor\betterCache\models\PageVariant;
 use yii\base\Exception;
 use yii\base\InvalidConfigException;
@@ -35,6 +35,16 @@ class FileDriver implements StorageDriverInterface
         FileHelper::unlink($this->getFilePath($variant));
     }
 
+    public function deleteAll(): void
+    {
+        $cachePath = BetterCache::getInstance()->getSettings()->cachePath;
+        if (!CachePath::isSafe($cachePath)) {
+            throw new InvalidConfigException("Refusing to delete the unsafe cache path “{$cachePath}”.");
+        }
+
+        FileHelper::removeDirectory(CachePath::resolve($cachePath));
+    }
+
     /**
      * Mirrors the web server lookup: {cachePath}/{host}/{uri}/{query}/index.html
      */
@@ -48,7 +58,7 @@ class FileDriver implements StorageDriverInterface
         }
 
         $parts = [
-            rtrim(App::parseEnv(BetterCache::getInstance()->getSettings()->cachePath), '/'),
+            CachePath::resolve(BetterCache::getInstance()->getSettings()->cachePath),
             strtolower($host),
             trim((string)parse_url($baseUrl, PHP_URL_PATH), '/'),
             $variant->path,

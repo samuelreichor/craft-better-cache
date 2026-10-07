@@ -127,6 +127,35 @@ class InvalidationTest extends TestCase
         $this->assertJobRenders($job, 'blog');
     }
 
+    public function testClearAllRemovesRowsAndFiles(): void
+    {
+        BetterCache::getInstance()->invalidation->clearAll();
+
+        $this->assertSame([], BetterCache::getInstance()->tagIndex->findAllPages());
+        $this->assertFileDoesNotExist($this->filePath('static'));
+    }
+
+    public function testClearUrlRemovesOnlyThatPage(): void
+    {
+        $url = BetterCache::getInstance()->warming->getUrl($this->pages['blog']);
+
+        $this->assertTrue(BetterCache::getInstance()->invalidation->clearUrl($url));
+        $this->assertFalse(BetterCache::getInstance()->invalidation->clearUrl('https://unknown.example/blog'));
+
+        $this->assertCleared('blog');
+        $this->assertKept('news');
+    }
+
+    public function testInvalidateAllAppliesTheStrategy(): void
+    {
+        $this->settings()->refreshStrategy = Constants::REFRESH_STRATEGY_EXPIRE;
+
+        BetterCache::getInstance()->invalidation->invalidateAll();
+
+        $this->assertKept('static');
+        $this->assertTrue($this->isStale('static'));
+    }
+
     public function testBareElementTagClearsAllPages(): void
     {
         Craft::$app->getElements()->invalidateAllCaches();
