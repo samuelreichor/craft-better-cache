@@ -29,6 +29,15 @@ composer require samuelreichor/craft-better-cache
 ./craft plugin/install better-cache
 ```
 
+## Dynamic Content
+
+A cached page is the same for every visitor. Two things are filled in by a small inline script after the page loads:
+
+- CSRF tokens: every `{{ csrfInput() }}` and `<meta name="csrf-token">` on a cached page gets a fresh token per visitor. No template changes are needed.
+- Dynamic Includes: `{{ craft.betterCache.include('_partials/cart', { label: 'Cart' }) }}` renders the template per visitor. Variables must be scalars or arrays.
+
+The include variables travel in the request URL, so pass IDs rather than large arrays. Included templates are rendered without the page layout, so `{% js %}` and `{% css %}` inside them are lost.
+
 ## Server Configuration
 
 With the File storage driver, Cached Pages are written to `@webroot/cache/better-cache/{host}/{uri}/{query}/index.html` (see the `cachePath` setting). The web server serves them without booting Craft. Only GET requests without the `X-Better-Cache-Bypass` header are served from the cache; everything else falls through to Craft. Better Cache sends that header when it re-renders or warms pages. Without the snippets below, PHP serves the cached pages early in the request instead.

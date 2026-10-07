@@ -50,6 +50,10 @@ class Capture extends Component
         }
 
         $this->stripCookies($response);
+        $response->content = $plugin->dynamicContent->prepareForStorage((string)$response->content);
+        if ($response->getHeaders()->has('Content-Length')) {
+            $response->getHeaders()->set('Content-Length', (string)strlen($response->content));
+        }
 
         $mutex = Craft::$app->getMutex();
         $lockName = Constants::MUTEX_PREFIX . $variant->getKey();

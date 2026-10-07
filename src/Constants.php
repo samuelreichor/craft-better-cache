@@ -48,6 +48,15 @@ final class Constants
     // Their children are fine (e.g. @storage/better-cache), only the directories themselves are protected.
     public const PROTECTED_PATH_ALIASES = ['@storage', '@config', '@templates', '@vendor', '@translations'];
 
+    public const CSRF_ACTION = 'better-cache/dynamic/csrf';
+    public const INCLUDE_ACTION = 'better-cache/dynamic/include';
+    public const INCLUDE_PAYLOAD_PARAM = 'payload';
+    public const CSRF_PLACEHOLDER_ATTRIBUTE = 'data-better-cache-csrf';
+    public const CSRF_META_NAME = 'csrf-token';
+    public const INCLUDE_PLACEHOLDER_ATTRIBUTE = 'data-better-cache-include';
+    public const SCRIPT_MARKER_ATTRIBUTE = 'data-better-cache-script';
+    public const NO_STORE_CACHE_CONTROL = 'no-store, private';
+
     public const CACHE_FILE_NAME = 'index.html';
     public const CACHE_KEY_PREFIX = self::HANDLE . ':page:';
     public const CACHE_DEPENDENCY_TAG = self::HANDLE . ':pages';
