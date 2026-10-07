@@ -31,7 +31,7 @@ composer require samuelreichor/craft-better-cache
 
 ## Server Configuration
 
-With the File storage driver, Cached Pages are written to `@webroot/cache/better-cache/{host}/{uri}/{query}/index.html` (see the `cachePath` setting). The web server serves them without booting Craft. Only GET requests without the `X-Better-Cache-Bypass` header are served from the cache; everything else falls through to Craft. Better Cache sends that header when it re-renders or warms pages.
+With the File storage driver, Cached Pages are written to `@webroot/cache/better-cache/{host}/{uri}/{query}/index.html` (see the `cachePath` setting). The web server serves them without booting Craft. Only GET requests without the `X-Better-Cache-Bypass` header are served from the cache; everything else falls through to Craft. Better Cache sends that header when it re-renders or warms pages. Without the snippets below, PHP serves the cached pages early in the request instead.
 
 The query string becomes a directory below the URI, so a cached `/blog/archive` is also served for `/blog?archive`.
 

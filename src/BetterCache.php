@@ -9,6 +9,7 @@ use craft\events\InvalidateElementCachesEvent;
 use craft\services\Elements;
 use craft\web\Request;
 use craft\web\Response;
+use samuelreichor\betterCache\drivers\CraftCacheDriver;
 use samuelreichor\betterCache\drivers\FileDriver;
 use samuelreichor\betterCache\drivers\StorageDriverInterface;
 use samuelreichor\betterCache\models\Settings;
@@ -42,8 +43,6 @@ class BetterCache extends Plugin
     public string $schemaVersion = '1.0.0';
     public bool $hasCpSettings = true;
 
-    private ?StorageDriverInterface $storageDriver = null;
-
     public static function config(): array
     {
         return [
@@ -76,8 +75,9 @@ class BetterCache extends Plugin
 
     public function getStorageDriver(): StorageDriverInterface
     {
-        return $this->storageDriver ??= match ($this->getSettings()->storageDriver) {
+        return match ($this->getSettings()->storageDriver) {
             Constants::STORAGE_DRIVER_FILE => new FileDriver(),
+            Constants::STORAGE_DRIVER_CRAFT_CACHE => new CraftCacheDriver(),
             default => throw new InvalidConfigException("Unsupported storage driver: {$this->getSettings()->storageDriver}"),
         };
     }
