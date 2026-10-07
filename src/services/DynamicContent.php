@@ -7,6 +7,7 @@ use craft\helpers\Html;
 use craft\helpers\Json;
 use craft\helpers\UrlHelper;
 use samuelreichor\betterCache\Constants;
+use samuelreichor\betterCache\helpers\Script;
 use yii\base\Component;
 use yii\base\InvalidArgumentException;
 
@@ -85,9 +86,7 @@ class DynamicContent extends Component
             'includeAttribute' => Constants::INCLUDE_PLACEHOLDER_ATTRIBUTE,
         ];
 
-        $js = trim((string)file_get_contents(dirname(__DIR__) . '/web/dynamic.js'));
-
-        return Html::tag('script', $js . '(' . Json::encode($config) . ');', [
+        return Html::tag('script', Script::invoke(Constants::DYNAMIC_SCRIPT, $config), [
             Constants::SCRIPT_MARKER_ATTRIBUTE => true,
         ]);
     }

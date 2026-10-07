@@ -49,6 +49,7 @@ final class Constants
     public const PROTECTED_PATH_ALIASES = ['@storage', '@config', '@templates', '@vendor', '@translations'];
 
     public const UTILITY_ID = self::HANDLE;
+    public const UTILITY_PERMISSION = 'utility:' . self::UTILITY_ID;
     public const UTILITY_ACTIONS = [
         'invalidate' => self::HANDLE . '/utility/invalidate',
         'clear' => self::HANDLE . '/utility/clear',
@@ -66,6 +67,10 @@ final class Constants
     public const CSRF_ACTION = self::HANDLE . '/dynamic/csrf';
     public const INCLUDE_ACTION = self::HANDLE . '/dynamic/include';
     public const INCLUDE_PAYLOAD_PARAM = 'payload';
+    public const DYNAMIC_SCRIPT = 'dynamic.js';
+    public const SIDEBAR_SCRIPT = 'sidebar.js';
+    public const SIDEBAR_URL_ATTRIBUTE = 'data-better-cache-clear-url';
+    public const SIDEBAR_STATUS_ATTRIBUTE = 'data-better-cache-status';
     public const CSRF_PLACEHOLDER_ATTRIBUTE = 'data-better-cache-csrf';
     public const CSRF_META_NAME = 'csrf-token';
     public const INCLUDE_PLACEHOLDER_ATTRIBUTE = 'data-better-cache-include';

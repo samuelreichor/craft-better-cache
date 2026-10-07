@@ -1,5 +1,3 @@
-{% import '_includes/forms.twig' as forms %}
-
 <h2>{{ 'Cached Pages'|t('better-cache') }}</h2>
 
 <table class="data fullwidth">
@@ -51,24 +49,3 @@
     </div>
   </form>
 {% endfor %}
-
-<hr>
-
-<h2>{{ 'Clear a Single URL'|t('better-cache') }}</h2>
-
-<form method="post" accept-charset="UTF-8">
-  {{ actionInput(actions.clearUrl) }}
-  {{ csrfInput() }}
-
-  {{ forms.textField({
-    label: 'URL'|t('better-cache'),
-    name: 'url',
-    type: 'url',
-    placeholder: siteUrl(''),
-    required: true,
-  }) }}
-
-  <div class="buttons">
-    <button type="submit" class="btn submit secondary">{{ 'Clear URL'|t('better-cache') }}</button>
-  </div>
-</form>

@@ -39,7 +39,7 @@ Cached pages end with `<!-- Cached by Better Cache on … -->`. When PHP serves 
 - `php craft better-cache/cache/warm` queues a render of all live pages.
 - `php craft better-cache/cache/refresh-scheduled` updates pages whose entries reached their post or expiry date. Run it from cron, e.g. every minute.
 
-The same actions are available in the control panel under Utilities, Better Cache.
+Invalidate, warm and clear are also available in the control panel under Utilities, Better Cache. The entry sidebar shows whether the entry's page is cached and can clear it.
 
 `php craft clear-caches/all` also clears all cached pages, the tag index and (with a purger) the CDN. In deploy scripts, prefer `better-cache/cache/invalidate`.
 
