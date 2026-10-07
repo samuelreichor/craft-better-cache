@@ -4,7 +4,6 @@ namespace samuelreichor\betterCache\tests;
 
 use Craft;
 use craft\elements\User;
-use craft\web\Request;
 use craft\web\Response;
 use PHPUnit\Framework\Attributes\DataProvider;
 use samuelreichor\betterCache\BetterCache;
@@ -14,17 +13,13 @@ use samuelreichor\betterCache\services\Cacheability;
 class CacheabilityTest extends TestCase
 {
     private Cacheability $cacheability;
-    private Settings $originalSettings;
     private Settings $settings;
-    private ?string $originalRequestMethod;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->originalRequestMethod = $_SERVER['REQUEST_METHOD'] ?? null;
         $this->cacheability = BetterCache::getInstance()->cacheability;
-        $this->settings = BetterCache::getInstance()->getSettings();
-        $this->originalSettings = clone $this->settings;
+        $this->settings = $this->settings();
         $this->settings->enabled = true;
         $this->settings->includedUriPatterns = ['*' => ['.*']];
         $this->settings->excludedUriPatterns = [];
@@ -33,14 +28,8 @@ class CacheabilityTest extends TestCase
 
     protected function tearDown(): void
     {
-        BetterCache::getInstance()->setSettings($this->originalSettings->toArray());
         Craft::$app->getUser()->setIdentity(null);
         Craft::$app->getConfig()->getGeneral()->isSystemLive = null;
-        if ($this->originalRequestMethod === null) {
-            unset($_SERVER['REQUEST_METHOD']);
-        } else {
-            $_SERVER['REQUEST_METHOD'] = $this->originalRequestMethod;
-        }
         parent::tearDown();
     }
 
@@ -208,33 +197,33 @@ class CacheabilityTest extends TestCase
 
     public function testStorableResponse(): void
     {
-        $this->assertTrue($this->cacheability->isStorable($this->response()));
+        $this->assertTrue($this->cacheability->isStorable($this->htmlResponse()));
     }
 
     public function testLoggedInRenderIsNotStored(): void
     {
         Craft::$app->getUser()->setIdentity($this->admin());
 
-        $this->assertFalse($this->cacheability->isStorable($this->response()));
+        $this->assertFalse($this->cacheability->isStorable($this->htmlResponse()));
     }
 
     public function testNonSuccessfulResponseIsNotStored(): void
     {
-        $this->assertFalse($this->cacheability->isStorable($this->response(statusCode: 301)));
-        $this->assertFalse($this->cacheability->isStorable($this->response(statusCode: 404)));
+        $this->assertFalse($this->cacheability->isStorable($this->htmlResponse(statusCode: 301)));
+        $this->assertFalse($this->cacheability->isStorable($this->htmlResponse(statusCode: 404)));
     }
 
     public function testNonHtmlResponseIsNotStored(): void
     {
-        $json = $this->response();
+        $json = $this->htmlResponse();
         $json->getHeaders()->set('Content-Type', 'application/json; charset=UTF-8');
         $this->assertFalse($this->cacheability->isStorable($json));
 
-        $withoutContentType = $this->response();
+        $withoutContentType = $this->htmlResponse();
         $withoutContentType->getHeaders()->remove('Content-Type');
         $this->assertFalse($this->cacheability->isStorable($withoutContentType));
 
-        $xml = $this->response();
+        $xml = $this->htmlResponse();
         $xml->getHeaders()->set('Content-Type', 'application/xml');
         $this->assertFalse($this->cacheability->isStorable($xml));
     }
@@ -255,43 +244,7 @@ class CacheabilityTest extends TestCase
     #[DataProvider('uncacheableBodies')]
     public function testUncacheableBodyIsNotStored(string $body): void
     {
-        $this->assertFalse($this->cacheability->isStorable($this->response($body)));
-    }
-
-    /**
-     * @param array<string, string> $headers
-     */
-    private function request(string $url, array $headers = [], string $method = 'GET'): Request
-    {
-        $_SERVER['REQUEST_METHOD'] = $method;
-        parse_str((string)parse_url($url, PHP_URL_QUERY), $query);
-
-        /** @var Request $request */
-        $request = Craft::createObject([
-            'class' => Request::class,
-            'isConsoleRequest' => false,
-            'hostInfo' => 'https://example.test',
-            'scriptUrl' => '/index.php',
-            'scriptFile' => Craft::getAlias('@webroot/index.php'),
-            'url' => $url,
-            'pathInfo' => ltrim((string)parse_url($url, PHP_URL_PATH), '/'),
-            'queryParams' => $query,
-        ]);
-        foreach ($headers as $name => $value) {
-            $request->getHeaders()->set($name, $value);
-        }
-
-        return $request;
-    }
-
-    private function response(string $body = '<html><body>Hi</body></html>', int $statusCode = 200): Response
-    {
-        $response = new Response();
-        $response->content = $body;
-        $response->getHeaders()->set('Content-Type', 'text/html; charset=UTF-8');
-        $response->setStatusCode($statusCode);
-
-        return $response;
+        $this->assertFalse($this->cacheability->isStorable($this->htmlResponse($body)));
     }
 
     private function admin(): User

@@ -2,34 +2,20 @@
 
 namespace samuelreichor\betterCache\tests;
 
-use Craft;
 use craft\helpers\FileHelper;
-use craft\models\Site;
-use samuelreichor\betterCache\BetterCache;
 use samuelreichor\betterCache\drivers\FileDriver;
 use samuelreichor\betterCache\models\PageVariant;
 
 class FileDriverTest extends TestCase
 {
-    private string $originalCachePath;
     private string $cachePath;
     private FileDriver $driver;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $settings = BetterCache::getInstance()->getSettings();
-        $this->originalCachePath = $settings->cachePath;
-        $this->cachePath = Craft::$app->getPath()->getTempPath() . '/better-cache-test';
-        $settings->cachePath = $this->cachePath;
+        $this->cachePath = $this->useTempCachePath();
         $this->driver = new FileDriver();
-    }
-
-    protected function tearDown(): void
-    {
-        FileHelper::removeDirectory($this->cachePath);
-        BetterCache::getInstance()->getSettings()->cachePath = $this->originalCachePath;
-        parent::tearDown();
     }
 
     public function testFilePathMirrorsHostUriAndQuery(): void
@@ -54,16 +40,5 @@ class FileDriverTest extends TestCase
         $file = $this->driver->getFilePath($variant);
         $this->assertSame('new', file_get_contents($file));
         $this->assertSame([$file], FileHelper::findFiles(dirname($file)));
-    }
-
-    private function siteWithUrl(): Site
-    {
-        foreach (Craft::$app->getSites()->getAllSites() as $site) {
-            if (parse_url((string)$site->getBaseUrl(), PHP_URL_HOST)) {
-                return $site;
-            }
-        }
-
-        $this->markTestSkipped('No site with an absolute base URL.');
     }
 }

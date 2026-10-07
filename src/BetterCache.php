@@ -5,6 +5,8 @@ namespace samuelreichor\betterCache;
 use Craft;
 use craft\base\Model;
 use craft\base\Plugin;
+use craft\events\InvalidateElementCachesEvent;
+use craft\services\Elements;
 use craft\web\Request;
 use craft\web\Response;
 use samuelreichor\betterCache\drivers\FileDriver;
@@ -12,9 +14,11 @@ use samuelreichor\betterCache\drivers\StorageDriverInterface;
 use samuelreichor\betterCache\models\Settings;
 use samuelreichor\betterCache\services\Cacheability;
 use samuelreichor\betterCache\services\Capture;
+use samuelreichor\betterCache\services\Invalidation;
 use samuelreichor\betterCache\services\TagIndex;
 use yii\base\Event;
 use yii\base\InvalidConfigException;
+use yii\queue\Queue;
 
 /**
  * Better Cache plugin
@@ -23,6 +27,7 @@ use yii\base\InvalidConfigException;
  * @method Settings getSettings()
  * @property-read Cacheability $cacheability
  * @property-read Capture $capture
+ * @property-read Invalidation $invalidation
  * @property-read TagIndex $tagIndex
  * @author Samuel Reichör <samuelreichor@gmail.com>
  * @copyright Samuel Reichör
@@ -41,6 +46,7 @@ class BetterCache extends Plugin
             'components' => [
                 'cacheability' => Cacheability::class,
                 'capture' => Capture::class,
+                'invalidation' => Invalidation::class,
                 'tagIndex' => TagIndex::class,
             ],
         ];
@@ -85,6 +91,15 @@ class BetterCache extends Plugin
 
     private function attachEventHandlers(): void
     {
+        Event::on(Elements::class, Elements::EVENT_INVALIDATE_CACHES, function(InvalidateElementCachesEvent $event) {
+            $this->invalidation->addTags($event->tags);
+        });
+
+        // A queue worker's request never ends, so resolve the tags after every job too.
+        foreach ([Queue::EVENT_AFTER_EXEC, Queue::EVENT_AFTER_ERROR] as $queueEvent) {
+            Event::on(Queue::class, $queueEvent, fn() => $this->invalidation->flush());
+        }
+
         Event::on(Response::class, Response::EVENT_AFTER_PREPARE, function(Event $event) {
             if ($event->sender === Craft::$app->getResponse()) {
                 $this->capture->finish($event->sender);
