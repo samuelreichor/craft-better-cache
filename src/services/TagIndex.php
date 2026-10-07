@@ -95,6 +95,26 @@ class TagIndex extends Component
         Db::delete(Constants::TABLE_PAGES, ['id' => $pageIds]);
     }
 
+    /**
+     * @return array{stale: bool, tags: string[]}|null
+     */
+    public function findPageState(PageVariant $variant): ?array
+    {
+        $page = (new Query())
+            ->select(['id', 'stale'])
+            ->from(Constants::TABLE_PAGES)
+            ->where(['siteId' => $variant->siteId, 'variantHash' => $variant->getHash()])
+            ->one();
+        if ($page === null) {
+            return null;
+        }
+
+        return [
+            'stale' => (bool)$page['stale'],
+            'tags' => (new Query())->select('tag')->from(Constants::TABLE_PAGE_TAGS)->where(['pageId' => $page['id']])->column(),
+        ];
+    }
+
     public function findOldestUpdate(): ?DateTime
     {
         $date = (new Query())->from(Constants::TABLE_PAGES)->min('dateUpdated');

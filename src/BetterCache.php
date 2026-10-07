@@ -16,6 +16,7 @@ use samuelreichor\betterCache\drivers\StorageDriverInterface;
 use samuelreichor\betterCache\models\Settings;
 use samuelreichor\betterCache\services\Cacheability;
 use samuelreichor\betterCache\services\Capture;
+use samuelreichor\betterCache\services\Cdn;
 use samuelreichor\betterCache\services\DynamicContent;
 use samuelreichor\betterCache\services\Invalidation;
 use samuelreichor\betterCache\services\ScheduledChanges;
@@ -33,6 +34,7 @@ use yii\queue\Queue;
  * @method Settings getSettings()
  * @property-read Cacheability $cacheability
  * @property-read Capture $capture
+ * @property-read Cdn $cdn
  * @property-read DynamicContent $dynamicContent
  * @property-read Invalidation $invalidation
  * @property-read ScheduledChanges $scheduledChanges
@@ -53,6 +55,7 @@ class BetterCache extends Plugin
             'components' => [
                 'cacheability' => Cacheability::class,
                 'capture' => Capture::class,
+                'cdn' => Cdn::class,
                 'dynamicContent' => DynamicContent::class,
                 'invalidation' => Invalidation::class,
                 'scheduledChanges' => ScheduledChanges::class,

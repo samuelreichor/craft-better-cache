@@ -44,12 +44,15 @@ class Invalidation extends Component
             return;
         }
 
-        $tagIndex = BetterCache::getInstance()->tagIndex;
-        $pages = array_intersect(Constants::ALL_PAGES_TAGS, $tags)
-            ? $tagIndex->findAllPages()
-            : $tagIndex->findPagesByTags($tags);
-
-        $this->apply($pages);
+        // Re-renders go through the public URL, so the CDN has to forget the page before they run.
+        $plugin = BetterCache::getInstance();
+        if (array_intersect(Constants::ALL_PAGES_TAGS, $tags)) {
+            $plugin->cdn->purgeAll();
+            $this->apply($plugin->tagIndex->findAllPages());
+        } else {
+            $plugin->cdn->purgeTags($tags);
+            $this->apply($plugin->tagIndex->findPagesByTags($tags));
+        }
     }
 
     /**
@@ -80,6 +83,7 @@ class Invalidation extends Component
     public function invalidateAll(): int
     {
         $pages = BetterCache::getInstance()->tagIndex->findAllPages();
+        BetterCache::getInstance()->cdn->purgeAll();
         $this->apply($pages);
 
         return count($pages);
@@ -93,6 +97,7 @@ class Invalidation extends Component
         $plugin = BetterCache::getInstance();
         $plugin->getStorageDriver()->deleteAll();
         $plugin->tagIndex->deleteAllPages();
+        $plugin->cdn->purgeAll();
     }
 
     /**
@@ -112,6 +117,7 @@ class Invalidation extends Component
         } else {
             $this->clear([$pageId => $variant]);
         }
+        $plugin->cdn->purgeUrls([$url]);
 
         return true;
     }

@@ -37,6 +37,18 @@ class Settings extends Model
 
     public string $cachePath = '@webroot/cache/better-cache';
 
+    public int $cdnMaxAge = Constants::DEFAULT_CDN_MAX_AGE;
+
+    /**
+     * Empty to send no tag header.
+     */
+    public string $cacheTagHeader = Constants::DEFAULT_CACHE_TAG_HEADER;
+
+    /**
+     * Class name of a PurgerInterface implementation, null for no CDN.
+     */
+    public ?string $purger = null;
+
     protected function defineRules(): array
     {
         return [
@@ -45,6 +57,7 @@ class Settings extends Model
             ['refreshStrategy', 'in', 'range' => Constants::REFRESH_STRATEGIES],
             [['includedUriPatterns', 'excludedUriPatterns'], 'validateUriPatterns'],
             ['warmConcurrency', 'integer', 'min' => 1],
+            ['cdnMaxAge', 'integer', 'min' => 0],
             ['cachePath', 'required'],
             ['cachePath', 'validateCachePath'],
         ];

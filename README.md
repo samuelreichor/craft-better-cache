@@ -38,6 +38,16 @@ A cached page is the same for every visitor. Two things are filled in by a small
 
 The include variables travel in the request URL, so pass IDs rather than large arrays. Included templates are rendered without the page layout, so `{% js %}` and `{% css %}` inside them are lost.
 
+## CDN
+
+Cached pages rendered or served by PHP for guests carry `Cache-Control: public, s-maxage=…` (setting `cdnMaxAge`) and a tag header (setting `cacheTagHeader`, `Cache-Tag` by default, `Surrogate-Key` for Fastly, empty to disable). Logged-in visitors get `Cache-Control: private`, stale pages and uncacheable responses get no CDN headers. Craft's cache tags are hashed for the tag header.
+
+To purge a CDN, set `purger` to a class implementing `samuelreichor\betterCache\purgers\PurgerInterface`. It receives the hashed tags on Invalidation, URLs when a single URL is cleared, and a purge of everything on clear.
+
+CDN headers are only sent when a purger is configured. Pages served directly by nginx or Apache carry no PHP headers, so a CDN only sees these headers on responses from Craft.
+
+Re-renders and warming request the public URL. If a CDN sits in front, it must not answer requests with the `X-Better-Cache-Bypass` header from its cache (on Cloudflare, a cache rule that bypasses the cache when the header is present).
+
 ## Server Configuration
 
 With the File storage driver, Cached Pages are written to `@webroot/cache/better-cache/{host}/{uri}/{query}/index.html` (see the `cachePath` setting). The web server serves them without booting Craft. Only GET requests without the `X-Better-Cache-Bypass` header are served from the cache; everything else falls through to Craft. Better Cache sends that header when it re-renders or warms pages. Without the snippets below, PHP serves the cached pages early in the request instead.
