@@ -21,6 +21,8 @@ class CachePathTest extends TestCase
             'project root' => ['@root'],
             'empty' => [''],
             'filesystem root' => ['/'],
+            'storage' => ['@storage'],
+            'templates' => ['@templates'],
         ];
     }
 
