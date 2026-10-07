@@ -8,6 +8,7 @@ use craft\elements\GlobalSet;
 use craft\db\Query;
 use samuelreichor\betterCache\BetterCache;
 use samuelreichor\betterCache\Constants;
+use samuelreichor\betterCache\jobs\InvalidateTagsJob;
 use samuelreichor\betterCache\jobs\RenderPagesJob;
 use samuelreichor\betterCache\models\PageVariant;
 use yii\queue\ExecEvent;
@@ -52,11 +53,29 @@ abstract class InvalidationTestCase extends TestCase
         ]);
         $this->assertTrue(Craft::$app->getElements()->saveElement($entry, false));
 
-        BetterCache::getInstance()->invalidation->flush();
+        $this->flushInvalidation();
 
         $this->assertCleared('blog');
         $this->assertKept('news');
         $this->assertKept('static');
+    }
+
+    public function testSavingEntryOnlyQueuesOneJob(): void
+    {
+        $section = Craft::$app->getEntries()->getSectionByHandle('blog');
+        $entry = new Entry([
+            'sectionId' => $section->id,
+            'typeId' => $section->getEntryTypes()[0]->id,
+            'title' => 'Better Cache test',
+        ]);
+        $this->assertTrue(Craft::$app->getElements()->saveElement($entry, false));
+
+        $jobs = $this->capturePushedJobs(fn() => BetterCache::getInstance()->invalidation->flush());
+
+        $this->assertCount(1, $jobs);
+        $this->assertInstanceOf(InvalidateTagsJob::class, $jobs[0]);
+        $this->assertSame(array_unique($jobs[0]->tags), $jobs[0]->tags);
+        $this->assertKept('blog');
     }
 
     public function testRepeatedTagsAreResolvedOnFlush(): void
@@ -67,7 +86,7 @@ abstract class InvalidationTestCase extends TestCase
         $invalidation->addTags([self::ENTRY]);
         $this->assertKept('blog');
 
-        $invalidation->flush();
+        $this->flushInvalidation();
 
         $this->assertCleared('blog');
         $this->assertCleared('news');
@@ -78,10 +97,11 @@ abstract class InvalidationTestCase extends TestCase
     {
         BetterCache::getInstance()->invalidation->addTags([self::ENTRY]);
 
-        Craft::$app->getQueue()->trigger(Queue::EVENT_AFTER_EXEC, new ExecEvent());
+        $jobs = $this->capturePushedJobs(fn() => Craft::$app->getQueue()->trigger(Queue::EVENT_AFTER_EXEC, new ExecEvent()));
 
-        $this->assertCleared('blog');
-        $this->assertKept('static');
+        $this->assertCount(1, $jobs);
+        $this->assertInstanceOf(InvalidateTagsJob::class, $jobs[0]);
+        $this->assertSame([self::ENTRY], $jobs[0]->tags);
     }
 
     public function testExpireKeepsPageMarksStaleAndQueuesRender(): void
@@ -140,7 +160,7 @@ abstract class InvalidationTestCase extends TestCase
     public function testBareElementTagClearsAllPages(): void
     {
         Craft::$app->getElements()->invalidateAllCaches();
-        BetterCache::getInstance()->invalidation->flush();
+        $this->flushInvalidation();
 
         $this->assertCleared('blog');
         $this->assertCleared('news');
@@ -150,7 +170,7 @@ abstract class InvalidationTestCase extends TestCase
     public function testSavingGlobalsClearsAllPages(): void
     {
         Craft::$app->getElements()->invalidateCachesForElement(new GlobalSet(['id' => PHP_INT_MAX]));
-        BetterCache::getInstance()->invalidation->flush();
+        $this->flushInvalidation();
 
         $this->assertCleared('blog');
         $this->assertCleared('news');
@@ -162,10 +182,8 @@ abstract class InvalidationTestCase extends TestCase
      */
     private function invalidateAndCaptureJob(array $tags): RenderPagesJob
     {
-        $jobs = $this->capturePushedJobs(function() use ($tags) {
-            BetterCache::getInstance()->invalidation->addTags($tags);
-            BetterCache::getInstance()->invalidation->flush();
-        });
+        BetterCache::getInstance()->invalidation->addTags($tags);
+        $jobs = $this->flushInvalidation();
 
         $this->assertCount(1, $jobs);
         $this->assertInstanceOf(RenderPagesJob::class, $jobs[0]);

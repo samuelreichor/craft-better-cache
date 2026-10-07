@@ -98,9 +98,9 @@ class CdnTest extends TestCase
         $invalidation = BetterCache::getInstance()->invalidation;
 
         $invalidation->addTags(['element::42']);
-        $invalidation->flush();
+        $this->flushInvalidation();
         $invalidation->addTags(['element::42', Constants::ALL_PAGES_TAGS[0]]);
-        $invalidation->flush();
+        $this->flushInvalidation();
 
         $this->assertSame([['tags', [$this->cdn->normalizeTag('element::42')]], ['all', null]], RecordingPurger::$calls);
     }

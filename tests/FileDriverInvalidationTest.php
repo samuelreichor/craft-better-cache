@@ -29,7 +29,7 @@ class FileDriverInvalidationTest extends InvalidationTestCase
         $brokenId = BetterCache::getInstance()->tagIndex->upsertPage($broken, [self::ENTRY]);
 
         BetterCache::getInstance()->invalidation->addTags([self::ENTRY]);
-        BetterCache::getInstance()->invalidation->flush();
+        $this->flushInvalidation();
 
         $this->assertCleared('blog');
         $this->assertArrayHasKey($brokenId, BetterCache::getInstance()->tagIndex->findAllPages());
