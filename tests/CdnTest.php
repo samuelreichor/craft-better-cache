@@ -156,7 +156,7 @@ class CdnTest extends TestCase
         $notFound = $this->finishCapture('/cdn-test', 404);
         $this->assertFalse($notFound->getHeaders()->has('Cache-Control'));
 
-        $this->settings()->cacheQueryStrings = false;
+        $this->settings()->includedQueryParams = [];
         $withQuery = $this->finishCapture('/cdn-test?x=1');
         $this->assertFalse($withQuery->getHeaders()->has('Cache-Control'));
         $this->assertFalse($withQuery->getHeaders()->has('Cache-Tag'));

@@ -41,12 +41,14 @@ class Cacheability extends Component
             return null;
         }
 
-        $query = $this->normalizeQuery($request->getQueryParams());
-        if ($query !== '' && !$this->settings()->cacheQueryStrings) {
-            return null;
+        $params = $this->withoutIgnoredParams($request->getQueryParams(), $site);
+        foreach (array_keys($params) as $param) {
+            if (!$this->matchesAny((string)$param, $site, $this->settings()->includedQueryParams)) {
+                return null;
+            }
         }
 
-        return new PageVariant($site->id, $path, $query);
+        return new PageVariant($site->id, $path, $this->buildQuery($params));
     }
 
     /**
@@ -74,7 +76,7 @@ class Cacheability extends Component
         parse_str((string)parse_url($url, PHP_URL_QUERY), $params);
         $path = $this->getSitePath(trim(rawurldecode((string)parse_url($urlWithoutQuery, PHP_URL_PATH)), '/'), $match['site']);
 
-        return new PageVariant($match['site']->id, $path, $this->normalizeQuery($params));
+        return new PageVariant($match['site']->id, $path, $this->buildQuery($this->withoutIgnoredParams($params, $match['site'])));
     }
 
     public function getRefreshStrategy(PageVariant $variant): string
@@ -206,13 +208,24 @@ class Cacheability extends Component
 
     /**
      * @param array<string, mixed> $params
+     * @return array<string, mixed>
      */
-    public function normalizeQuery(array $params): string
+    private function withoutIgnoredParams(array $params, Site $site): array
     {
-        $dropped = [...Constants::TRACKING_PARAMS, Craft::$app->getConfig()->getGeneral()->pathParam];
-        foreach (array_filter($dropped) as $param) {
-            unset($params[$param]);
-        }
+        unset($params[Craft::$app->getConfig()->getGeneral()->pathParam]);
+
+        return array_filter(
+            $params,
+            fn($param) => !$this->matchesAny((string)$param, $site, $this->settings()->excludedQueryParams),
+            ARRAY_FILTER_USE_KEY,
+        );
+    }
+
+    /**
+     * @param array<string, mixed> $params
+     */
+    private function buildQuery(array $params): string
+    {
         ksort($params);
 
         return http_build_query($params);

@@ -24,7 +24,8 @@ class CacheabilityTest extends TestCase
         $this->settings->enabled = true;
         $this->settings->includedUriPatterns = ['*' => ['.*']];
         $this->settings->excludedUriPatterns = [];
-        $this->settings->cacheQueryStrings = false;
+        $this->settings->includedQueryParams = [];
+        $this->settings->excludedQueryParams = ['*' => ['gclid', 'fbclid', 'utm_.*']];
     }
 
     protected function tearDown(): void
@@ -91,14 +92,14 @@ class CacheabilityTest extends TestCase
     #[DataProvider('tokenRequests')]
     public function testPreviewAndTokenRequestsAreRefused(string $url, array $headers): void
     {
-        $this->settings->cacheQueryStrings = true;
+        $this->settings->includedQueryParams = ['*' => ['.*']];
 
         $this->assertNull($this->cacheability->getPageVariant($this->request($url, $headers)));
     }
 
     public function testNoCacheParamIsRefused(): void
     {
-        $this->settings->cacheQueryStrings = true;
+        $this->settings->includedQueryParams = ['*' => ['.*']];
 
         $this->assertNull($this->cacheability->getPageVariant($this->request('/blog?no-cache=1')));
         $this->assertNotNull($this->cacheability->getPageVariant($this->request('/blog?no-cache=')));
@@ -185,20 +186,46 @@ class CacheabilityTest extends TestCase
         $this->assertNotNull($this->cacheability->getPageVariant($this->request('/blog/public')));
     }
 
-    public function testQueryStringIsRefusedUnlessEnabled(): void
+    public function testQueryStringIsRefusedUnlessIncluded(): void
     {
         $this->assertNull($this->cacheability->getPageVariant($this->request('/blog?page=2')));
 
-        $this->settings->cacheQueryStrings = true;
+        $this->settings->includedQueryParams = ['*' => ['.*']];
         $variant = $this->cacheability->getPageVariant($this->request('/blog?page=2&a=1'));
         $this->assertSame('a=1&page=2', $variant?->query);
     }
 
-    public function testTrackingParamsAreDropped(): void
+    public function testExcludedParamsAreIgnored(): void
     {
-        $variant = $this->cacheability->getPageVariant($this->request('/blog?gclid=abc&fbclid=def'));
+        $variant = $this->cacheability->getPageVariant($this->request('/blog?gclid=abc&fbclid=def&utm_source=x'));
 
         $this->assertSame('', $variant?->query);
+    }
+
+    public function testOnlyIncludedParamsMakeVariants(): void
+    {
+        $this->settings->includedQueryParams = ['*' => ['^(church|page)$']];
+
+        $this->assertSame('church=5&page=2', $this->cacheability->getPageVariant($this->request('/blog?page=2&utm_medium=x&church=5'))?->query);
+        $this->assertNull($this->cacheability->getPageVariant($this->request('/blog?church=5&random=1')));
+    }
+
+    public function testIncludedParamsApplyPerSite(): void
+    {
+        $handle = Craft::$app->getSites()->getCurrentSite()->handle;
+
+        $this->settings->includedQueryParams = ['otherSite' => ['page']];
+        $this->assertNull($this->cacheability->getPageVariant($this->request('/blog?page=2')));
+
+        $this->settings->includedQueryParams = [$handle => ['page']];
+        $this->assertSame('page=2', $this->cacheability->getPageVariant($this->request('/blog?page=2'))?->query);
+    }
+
+    public function testInvalidParamPatternFailsValidation(): void
+    {
+        $this->settings->includedQueryParams = ['*' => ['(']];
+
+        $this->assertFalse($this->settings->validate(['includedQueryParams']));
     }
 
     public function testUrlMapsToPageVariant(): void

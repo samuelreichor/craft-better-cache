@@ -43,6 +43,19 @@ Invalidate, warm and clear are also available in the control panel under Utiliti
 
 `php craft clear-caches/all` also clears all cached pages, the tag index and (with a purger) the CDN. In deploy scripts, prefer `better-cache/cache/invalidate`.
 
+## Query Strings
+
+URLs with a query string are not cached unless every param is either included or excluded. Both settings are regexes on the param name, keyed by site handle (`*` for all sites):
+
+```php
+'includedQueryParams' => ['*' => ['^(page|category)$']],
+'excludedQueryParams' => ['*' => ['gclid', 'fbclid', 'utm_.*']],
+```
+
+Each included param makes its own cached page, so `/events?category=5` and `/events?category=6` are cached separately. Excluded params are ignored, so `/events?utm_source=newsletter` gets the page cached for `/events`. Any other param makes the request uncacheable, so a template that reads it never puts its output into a page other visitors get.
+
+The web server only serves such a page directly when the query string matches the stored form exactly (params sorted, excluded ones removed). Otherwise PHP serves it early in the request.
+
 ## Queue
 
 Invalidations and re-renders run as queue jobs on Craft's `queue` component. To keep them apart from other jobs, define a second queue in `config/app.php`, point Better Cache to it and run a worker for its channel:
