@@ -11,17 +11,17 @@ Terms follow `CONTEXT.md`.
 | Storage | `StorageDriverInterface` with two drivers: **File** (static files in `@webroot/cache/better-cache`, configurable, served by nginx/Apache) and **Craft Cache** (Craft's cache component, served by Craft early in the request, for multi-server). |
 | Tag Index | DB tables for both drivers. A miss upserts its row, so missing files heal themselves. |
 | Refresh Strategy | One global setting: Clear, Expire or Refresh. |
-| Re-rendering | Anonymous HTTP GET to the real URL (Guzzle pool, no cookies, bypass header, configurable concurrency), run as queue jobs. |
+| Re-rendering | Anonymous HTTP GET to the real URL (Guzzle pool, no cookies, bypass header, configurable concurrency), run as queue jobs in batches. A re-render that redirects or returns a 4xx clears the page. |
 | Warming | All live element URLs per site plus all Page Variants known to the Tag Index. |
 | Scheduled Changes | Cron command detects passed postDate/expiryDate and triggers an Invalidation. |
-| Deploys | `better-cache/cache/invalidate` applies the global strategy; `better-cache/cache/clear` as escape hatch. |
+| Deploys | `better-cache/cache/invalidate` applies the global strategy; `better-cache/cache/clear` as escape hatch. `clear-caches/all` clears everything too, so deploy scripts should prefer `invalidate`. |
 | Cacheability | Blitz rules (see below). URIs are opt-in via include patterns. URLs with a query string are not cached by default. |
-| Logged-in users | Served the Cached Page; their renders are not stored. |
-| Dynamic content | CSRF endpoint + JS, plus Dynamic Includes. Always JS, for both drivers. |
-| CDN | `Cache-Control` and cache tag headers, plus a `PurgerInterface`. No concrete CDN in v1. |
+| Logged-in users | Served the Cached Page with `Cache-Control: private`, keeping their cookies; their renders are not stored. |
+| Dynamic content | CSRF inputs and the `csrf-token` meta tag become placeholders automatically when a page is stored (no helper), filled by one inline script from a CSRF endpoint. Dynamic Includes via `craft.betterCache.include()` with a signed payload. Always JS, for both drivers. |
+| CDN | `Cache-Control` and hashed cache tag headers, only when a purger is configured. `PurgerInterface` with `purgeTags`, `purgeUrls` and `purgeAll`; the CDN is purged before re-renders run. Stale pages get no public headers. No concrete CDN in v1. |
 | Enabling | `enabled` setting, set per environment through Craft's multi-environment config. |
-| CP | Utility page (counts per site, invalidate/clear/warm, single URL) plus an entry in Craft's "Clear Caches". |
-| Server config | nginx/Apache snippets in the docs only. |
+| CP | Utility page (counts per site, invalidate/clear/warm, single URL) plus an entry in Craft's "Clear Caches" that clears everything. |
+| Server config | nginx/Apache snippets in the docs only. Without them, PHP serves cached pages early in the request. |
 | Out of v1 | Per-template overrides, concrete CDN purgers, deployers, cached includes, SSI/ESI, non-HTML responses. |
 
 ### Cacheability rules (from Blitz)
@@ -46,7 +46,7 @@ Response:
 ## Implementation notes
 
 - Start collecting cache info before routing (on `EVENT_INIT`), and also call `collectCacheInfoForElement()` for the matched element, because Craft loads it before rendering starts.
-- Listen to `Elements::EVENT_INVALIDATE_CACHES`. One save fires it several times (propagation, nested elements), so buffer the tags per request and resolve them once at the end of the request.
+- Listen to `Elements::EVENT_INVALIDATE_CACHES`. One save fires it several times (propagation, nested elements), so buffer the tags per request (and per queue job) and push one `InvalidateTagsJob` at the end. The job resolves the tags and applies the strategy, so saving content does not wait. The explicit commands (`invalidate`, `clear`, `clear-url`) stay synchronous.
 - Match tags exactly against the Tag Index. The tags in `Constants::ALL_PAGES_TAGS` affect every page: the bare `element` tag (Fields, Sites) and the GlobalSet tag, since global sets are memoized per request and pages may not carry their tags.
 - Keep the cacheability check and the strategy decision behind one seam so per-template overrides can be added later without restructuring.
 - Expire under the File driver: keep the file, mark the row stale, queue a re-render that replaces the file atomically (write to a temp file, then rename).
@@ -76,6 +76,14 @@ Response:
 11. **CP**: utility page and "Clear Caches" entry.
     Verify: counts match the Tag Index; the buttons trigger the same services as the CLI.
 
-## Open
+## Known limits
 
-- There is no test harness yet. Pick one before step 2 (Codeception as Craft ships it, or Pest).
+- A render that started before a save can store old content after the Invalidation ran.
+- Scheduled Changes cover entries only, not other element types with post dates.
+- The query string is a directory below the URI, so a cached `/blog/archive` is also served for `/blog?archive`.
+- The Apache snippet is not verified.
+- `InvalidateTagsJob` does not split itself; this only matters at six-figure page counts.
+- The utility's rendering is not covered by automated tests (the console test app cannot render CP forms).
+- Pages served directly by nginx or Apache carry no CDN headers.
+
+Tests use PHPUnit against the surrounding showcase install (`composer test` inside ddev).
