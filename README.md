@@ -50,6 +50,8 @@ A cached page is the same for every visitor. Two things are filled in by a small
 - CSRF tokens: every `{{ csrfInput() }}` and `<meta name="csrf-token">` on a cached page gets a fresh token per visitor. No template changes are needed.
 - Dynamic Includes: `{{ craft.betterCache.include('_partials/cart', { label: 'Cart' }) }}` renders the template per visitor. Variables must be scalars or arrays.
 
+Saving a Commerce order (a cart) never refreshes cached pages, so anything showing the cart, like a counter in the header, must be rendered with `craft.betterCache.include`.
+
 The include variables travel in the request URL, so pass IDs rather than large arrays. Included templates are rendered without the page layout, so `{% js %}` and `{% css %}` inside them are lost.
 
 ## CDN

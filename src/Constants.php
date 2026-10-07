@@ -36,6 +36,10 @@ final class Constants
         'element::' . GlobalSet::class . '::*',
     ];
 
+    // A Commerce order is a visitor's cart, so it must not be part of a Cached Page. Saving one would
+    // otherwise invalidate every page that shows a cart counter.
+    public const ORDER_TAG = 'element::craft\commerce\elements\Order';
+
     // Craft falls back to the element type wildcard when a query has no tags, so a query that can never
     // return anything gets one that is never invalidated.
     public const NO_ELEMENTS_TAG = 'element::none';
