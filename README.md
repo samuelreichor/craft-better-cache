@@ -101,6 +101,8 @@ With the File storage driver, Cached Pages are written to `@webroot/cache/better
 
 The query string becomes a directory below the URI, so a cached `/blog/archive` is also served for `/blog?archive`.
 
+With `enabled` set to false, Better Cache neither serves nor refreshes pages, but the web server keeps serving the stored files. Run `php craft better-cache/cache/clear` before disabling it on a server with these snippets.
+
 ### nginx
 
 Replace the `try_files` line of your `location /` block:

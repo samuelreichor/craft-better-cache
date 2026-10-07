@@ -161,7 +161,9 @@ class BetterCache extends Plugin
         });
 
         Event::on(Elements::class, Elements::EVENT_BEFORE_SAVE_ELEMENT, function(ElementEvent $event) {
-            $this->elementChanges->beforeSave($event->element);
+            if ($this->getSettings()->enabled) {
+                $this->elementChanges->beforeSave($event->element);
+            }
         });
 
         Event::on(Elements::class, Elements::EVENT_AFTER_SAVE_ELEMENT, function(ElementEvent $event) {
@@ -170,6 +172,7 @@ class BetterCache extends Plugin
 
         Event::on(Elements::class, Elements::EVENT_INVALIDATE_CACHES, function(InvalidateElementCachesEvent $event) {
             if (
+                !$this->getSettings()->enabled ||
                 in_array(Constants::ORDER_TAG . '::*', $event->tags, true) ||
                 $this->elementChanges->canSkipInvalidation($event->element)
             ) {

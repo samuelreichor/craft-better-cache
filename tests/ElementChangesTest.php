@@ -8,6 +8,20 @@ use samuelreichor\betterCache\BetterCache;
 
 class ElementChangesTest extends TestCase
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->settings()->enabled = true;
+    }
+
+    public function testNothingIsQueuedWhileDisabled(): void
+    {
+        $this->settings()->enabled = false;
+        $this->createEntry();
+
+        $this->assertFalse($this->flushQueuedJob());
+    }
+
     public function testNewEntryInvalidates(): void
     {
         $this->createEntry();
