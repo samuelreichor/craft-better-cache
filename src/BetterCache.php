@@ -5,10 +5,12 @@ namespace samuelreichor\betterCache;
 use Craft;
 use craft\base\Model;
 use craft\base\Plugin;
+use craft\events\DeleteSiteEvent;
 use craft\events\InvalidateElementCachesEvent;
 use craft\events\RegisterCacheOptionsEvent;
 use craft\events\RegisterComponentTypesEvent;
 use craft\services\Elements;
+use craft\services\Sites;
 use craft\services\Utilities;
 use craft\utilities\ClearCaches;
 use craft\web\Request;
@@ -120,6 +122,10 @@ class BetterCache extends Plugin
                 'label' => Craft::t(Constants::HANDLE, 'Better Cache pages'),
                 'action' => fn() => $this->invalidation->clearAll(),
             ];
+        });
+
+        Event::on(Sites::class, Sites::EVENT_BEFORE_APPLY_SITE_DELETE, function(DeleteSiteEvent $event) {
+            $this->invalidation->clearSite($event->site->id);
         });
 
         Event::on(CraftVariable::class, CraftVariable::EVENT_INIT, function(Event $event) {

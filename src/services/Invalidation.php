@@ -111,6 +111,16 @@ class Invalidation extends Component
     }
 
     /**
+     * Runs before a site is deleted, while its pages can still be resolved to files.
+     */
+    public function clearSite(int $siteId): void
+    {
+        $plugin = BetterCache::getInstance();
+        $this->clear($plugin->tagIndex->findPagesBySite($siteId));
+        $plugin->cdn->purgeAll();
+    }
+
+    /**
      * @return bool whether the URL belongs to a site
      */
     public function clearUrl(string $url): bool
