@@ -6,7 +6,9 @@ use Craft;
 use craft\base\Model;
 use craft\base\Plugin;
 use craft\events\InvalidateElementCachesEvent;
+use craft\events\RegisterComponentTypesEvent;
 use craft\services\Elements;
+use craft\services\Utilities;
 use craft\web\Request;
 use craft\web\Response;
 use craft\web\twig\variables\CraftVariable;
@@ -22,6 +24,7 @@ use samuelreichor\betterCache\services\Invalidation;
 use samuelreichor\betterCache\services\ScheduledChanges;
 use samuelreichor\betterCache\services\TagIndex;
 use samuelreichor\betterCache\services\Warming;
+use samuelreichor\betterCache\utilities\BetterCacheUtility;
 use samuelreichor\betterCache\variables\BetterCacheVariable;
 use yii\base\Event;
 use yii\base\InvalidConfigException;
@@ -105,6 +108,10 @@ class BetterCache extends Plugin
 
     private function attachEventHandlers(): void
     {
+        Event::on(Utilities::class, Utilities::EVENT_REGISTER_UTILITIES, function(RegisterComponentTypesEvent $event) {
+            $event->types[] = BetterCacheUtility::class;
+        });
+
         Event::on(CraftVariable::class, CraftVariable::EVENT_INIT, function(Event $event) {
             $event->sender->set('betterCache', BetterCacheVariable::class);
         });

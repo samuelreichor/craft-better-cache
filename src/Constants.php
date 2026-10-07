@@ -48,8 +48,23 @@ final class Constants
     // Their children are fine (e.g. @storage/better-cache), only the directories themselves are protected.
     public const PROTECTED_PATH_ALIASES = ['@storage', '@config', '@templates', '@vendor', '@translations'];
 
-    public const CSRF_ACTION = 'better-cache/dynamic/csrf';
-    public const INCLUDE_ACTION = 'better-cache/dynamic/include';
+    public const UTILITY_ID = self::HANDLE;
+    public const UTILITY_ACTIONS = [
+        'invalidate' => self::HANDLE . '/utility/invalidate',
+        'clear' => self::HANDLE . '/utility/clear',
+        'clearUrl' => self::HANDLE . '/utility/clear-url',
+        'warm' => self::HANDLE . '/utility/warm',
+    ];
+
+    // Shared by the console commands and the utility, translated with Craft::t(self::HANDLE, ...).
+    public const MESSAGE_PAGES_INVALIDATED = '{count} pages invalidated.';
+    public const MESSAGE_CACHE_CLEARED = 'Cache cleared.';
+    public const MESSAGE_URL_CLEARED = 'Cleared {url}.';
+    public const MESSAGE_NO_SITE_FOR_URL = 'No site matches {url}.';
+    public const MESSAGE_WARMING_QUEUED = 'Warming queued.';
+
+    public const CSRF_ACTION = self::HANDLE . '/dynamic/csrf';
+    public const INCLUDE_ACTION = self::HANDLE . '/dynamic/include';
     public const INCLUDE_PAYLOAD_PARAM = 'payload';
     public const CSRF_PLACEHOLDER_ATTRIBUTE = 'data-better-cache-csrf';
     public const CSRF_META_NAME = 'csrf-token';

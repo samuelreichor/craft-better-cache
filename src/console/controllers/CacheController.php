@@ -2,8 +2,10 @@
 
 namespace samuelreichor\betterCache\console\controllers;
 
+use Craft;
 use craft\console\Controller;
 use samuelreichor\betterCache\BetterCache;
+use samuelreichor\betterCache\Constants;
 use yii\console\ExitCode;
 
 /**
@@ -17,7 +19,7 @@ class CacheController extends Controller
     public function actionInvalidate(): int
     {
         $count = BetterCache::getInstance()->invalidation->invalidateAll();
-        $this->stdout("$count pages invalidated.\n");
+        $this->stdout(Craft::t(Constants::HANDLE, Constants::MESSAGE_PAGES_INVALIDATED, ['count' => $count]) . "\n");
 
         return ExitCode::OK;
     }
@@ -28,7 +30,7 @@ class CacheController extends Controller
     public function actionClear(): int
     {
         BetterCache::getInstance()->invalidation->clearAll();
-        $this->stdout("Cache cleared.\n");
+        $this->stdout(Craft::t(Constants::HANDLE, Constants::MESSAGE_CACHE_CLEARED) . "\n");
 
         return ExitCode::OK;
     }
@@ -39,10 +41,10 @@ class CacheController extends Controller
     public function actionClearUrl(string $url): int
     {
         if (!BetterCache::getInstance()->invalidation->clearUrl($url)) {
-            $this->stderr("No site matches $url.\n");
+            $this->stderr(Craft::t(Constants::HANDLE, Constants::MESSAGE_NO_SITE_FOR_URL, ['url' => $url]) . "\n");
             return ExitCode::DATAERR;
         }
-        $this->stdout("Cleared $url.\n");
+        $this->stdout(Craft::t(Constants::HANDLE, Constants::MESSAGE_URL_CLEARED, ['url' => $url]) . "\n");
 
         return ExitCode::OK;
     }
@@ -53,7 +55,7 @@ class CacheController extends Controller
     public function actionWarm(): int
     {
         BetterCache::getInstance()->warming->warm();
-        $this->stdout("Warming queued.\n");
+        $this->stdout(Craft::t(Constants::HANDLE, Constants::MESSAGE_WARMING_QUEUED) . "\n");
 
         return ExitCode::OK;
     }
