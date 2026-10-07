@@ -6,6 +6,7 @@ use Craft;
 use craft\base\ElementInterface;
 use craft\web\Request;
 use craft\web\Response;
+use DateTime;
 use samuelreichor\betterCache\BetterCache;
 use samuelreichor\betterCache\Constants;
 use samuelreichor\betterCache\models\PageVariant;
@@ -53,7 +54,8 @@ class Capture extends Component
 
         $this->addCdnHeaders($response, $tags);
         $this->stripCookies($response);
-        $response->content = $plugin->dynamicContent->prepareForStorage((string)$response->content);
+        $response->content = $plugin->dynamicContent->prepareForStorage((string)$response->content)
+            . $this->comment(Constants::CACHED_COMMENT);
         if ($response->getHeaders()->has(Constants::CONTENT_LENGTH_HEADER)) {
             $response->getHeaders()->set(Constants::CONTENT_LENGTH_HEADER, (string)strlen($response->content));
         }
@@ -92,7 +94,7 @@ class Capture extends Component
     {
         $response = Craft::$app->getResponse();
         $response->format = Response::FORMAT_RAW;
-        $response->content = $html;
+        $response->content = $html . $this->comment(Constants::SERVED_COMMENT);
         $headers = $response->getHeaders();
         $headers->set(Constants::CONTENT_TYPE_HEADER, Constants::HTML_CONTENT_TYPE . '; charset=' . $response->charset);
 
@@ -129,6 +131,11 @@ class Capture extends Component
         } elseif ($tags !== null) {
             $cdn->addPublicHeaders($response, $tags);
         }
+    }
+
+    private function comment(string $format): string
+    {
+        return sprintf($format, (new DateTime())->format(DATE_ATOM));
     }
 
     private function stripCookies(Response $response): void

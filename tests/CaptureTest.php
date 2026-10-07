@@ -29,6 +29,6 @@ class CaptureTest extends TestCase
         $capture->finish($response);
 
         $this->assertTrue((new Query())->from(Constants::TABLE_PAGES)->where(['siteId' => $site->id, 'path' => $path])->exists());
-        $this->assertSame('<html></html>', $response->content);
+        $this->assertStringStartsWith('<html></html><!-- Cached by Better Cache on ', $response->content);
     }
 }
