@@ -36,6 +36,13 @@ final class Constants
         'element::' . GlobalSet::class . '::*',
     ];
 
+    // Makes the web server skip the Cached Page, so re-renders and warming reach Craft.
+    public const BYPASS_HEADER = 'X-Better-Cache-Bypass';
+
+    // Small batches keep each render job well below the queue's time to reserve.
+    public const RENDER_BATCH_SIZE = 50;
+    public const RENDER_TIMEOUT = 30;
+
     public const CACHE_FILE_NAME = 'index.html';
     public const MUTEX_PREFIX = 'better-cache:';
     public const MUTEX_TIMEOUT = 1;

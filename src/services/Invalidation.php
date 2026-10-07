@@ -49,7 +49,29 @@ class Invalidation extends Component
             ? $tagIndex->findAllPages()
             : $tagIndex->findPagesByTags($tags);
 
-        $this->clear($pages);
+        $this->apply($pages);
+    }
+
+    /**
+     * @param array<int, PageVariant> $pages keyed by page ID
+     */
+    public function apply(array $pages): void
+    {
+        $plugin = BetterCache::getInstance();
+        $byStrategy = [];
+        foreach ($pages as $pageId => $variant) {
+            $byStrategy[$plugin->cacheability->getRefreshStrategy($variant)][$pageId] = $variant;
+        }
+
+        $this->clear($byStrategy[Constants::REFRESH_STRATEGY_CLEAR] ?? []);
+
+        $expired = $byStrategy[Constants::REFRESH_STRATEGY_EXPIRE] ?? [];
+        $plugin->tagIndex->markStale(array_keys($expired));
+        $plugin->warming->render($expired);
+
+        $refreshed = $byStrategy[Constants::REFRESH_STRATEGY_REFRESH] ?? [];
+        $this->deleteFiles($refreshed);
+        $plugin->warming->render($refreshed);
     }
 
     /**
@@ -57,17 +79,28 @@ class Invalidation extends Component
      */
     public function clear(array $pages): void
     {
-        $plugin = BetterCache::getInstance();
+        BetterCache::getInstance()->tagIndex->deletePages($this->deleteFiles($pages));
+    }
+
+    /**
+     * A failed delete is left out of the returned IDs, so its row stays and the next Invalidation retries it.
+     *
+     * @param array<int, PageVariant> $pages keyed by page ID
+     * @return int[] IDs of the pages whose file is gone
+     */
+    private function deleteFiles(array $pages): array
+    {
+        $driver = BetterCache::getInstance()->getStorageDriver();
         $deletedIds = [];
         foreach ($pages as $pageId => $variant) {
-            // A failed delete keeps its row, so the next Invalidation retries it.
             try {
-                $plugin->getStorageDriver()->delete($variant);
+                $driver->delete($variant);
                 $deletedIds[] = $pageId;
             } catch (Throwable $e) {
                 Craft::warning("Could not clear “{$variant->path}”: {$e->getMessage()}", Constants::HANDLE);
             }
         }
-        $plugin->tagIndex->deletePages($deletedIds);
+
+        return $deletedIds;
     }
 }

@@ -5,8 +5,11 @@ namespace samuelreichor\betterCache\tests;
 use Craft;
 use craft\elements\Entry;
 use craft\elements\GlobalSet;
+use craft\db\Query;
 use samuelreichor\betterCache\BetterCache;
+use samuelreichor\betterCache\Constants;
 use samuelreichor\betterCache\drivers\FileDriver;
+use samuelreichor\betterCache\jobs\RenderPagesJob;
 use samuelreichor\betterCache\models\PageVariant;
 use yii\queue\ExecEvent;
 use yii\queue\Queue;
@@ -22,6 +25,7 @@ class InvalidationTest extends TestCase
     {
         parent::setUp();
         $this->useTempCachePath();
+        $this->settings()->refreshStrategy = Constants::REFRESH_STRATEGY_CLEAR;
 
         $sections = Craft::$app->getEntries();
         $blogId = $sections->getSectionByHandle('blog')?->id;
@@ -99,6 +103,30 @@ class InvalidationTest extends TestCase
         $this->assertArrayHasKey($brokenId, BetterCache::getInstance()->tagIndex->findAllPages());
     }
 
+    public function testExpireKeepsFileMarksStaleAndQueuesRender(): void
+    {
+        $this->settings()->refreshStrategy = Constants::REFRESH_STRATEGY_EXPIRE;
+
+        $job = $this->invalidateAndCaptureJob([self::ENTRY . '::section:' . Craft::$app->getEntries()->getSectionByHandle('blog')->id]);
+
+        $this->assertKept('blog');
+        $this->assertTrue($this->isStale('blog'));
+        $this->assertFalse($this->isStale('news'));
+        $this->assertJobRenders($job, 'blog');
+    }
+
+    public function testRefreshDeletesFileKeepsRowAndQueuesRender(): void
+    {
+        $this->settings()->refreshStrategy = Constants::REFRESH_STRATEGY_REFRESH;
+
+        $job = $this->invalidateAndCaptureJob([self::ENTRY . '::section:' . Craft::$app->getEntries()->getSectionByHandle('blog')->id]);
+
+        $this->assertFileDoesNotExist($this->filePath('blog'));
+        $this->assertTrue($this->isIndexed('blog'));
+        $this->assertKept('news');
+        $this->assertJobRenders($job, 'blog');
+    }
+
     public function testBareElementTagClearsAllPages(): void
     {
         Craft::$app->getElements()->invalidateAllCaches();
@@ -117,6 +145,41 @@ class InvalidationTest extends TestCase
         $this->assertCleared('blog');
         $this->assertCleared('news');
         $this->assertCleared('static');
+    }
+
+    /**
+     * @param string[] $tags
+     */
+    private function invalidateAndCaptureJob(array $tags): RenderPagesJob
+    {
+        $jobs = $this->capturePushedJobs(function() use ($tags) {
+            BetterCache::getInstance()->invalidation->addTags($tags);
+            BetterCache::getInstance()->invalidation->flush();
+        });
+
+        $this->assertCount(1, $jobs);
+        $this->assertInstanceOf(RenderPagesJob::class, $jobs[0]);
+
+        return $jobs[0];
+    }
+
+    private function assertJobRenders(RenderPagesJob $job, string $path): void
+    {
+        $variants = array_map(fn(array $page) => $page[1], $job->pages);
+        $this->assertContainsEquals($this->pages[$path], $variants);
+        $this->assertNotContainsEquals($this->pages['news'], $variants);
+        foreach ($job->pages as [$pageId]) {
+            $this->assertNotNull($pageId);
+        }
+    }
+
+    private function isStale(string $path): bool
+    {
+        return (bool)(new Query())
+            ->select('stale')
+            ->from(Constants::TABLE_PAGES)
+            ->where(['siteId' => $this->pages[$path]->siteId, 'variantHash' => $this->pages[$path]->getHash()])
+            ->scalar();
     }
 
     /**

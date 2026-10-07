@@ -10,6 +10,8 @@ use craft\web\Response;
 use samuelreichor\betterCache\BetterCache;
 use samuelreichor\betterCache\models\Settings;
 use yii\db\Transaction;
+use yii\queue\PushEvent;
+use yii\queue\Queue;
 
 abstract class TestCase extends \PHPUnit\Framework\TestCase
 {
@@ -100,5 +102,24 @@ abstract class TestCase extends \PHPUnit\Framework\TestCase
         $response->setStatusCode($statusCode);
 
         return $response;
+    }
+
+    /**
+     * @return array<mixed> the jobs pushed while running $callback
+     */
+    protected function capturePushedJobs(callable $callback): array
+    {
+        $jobs = [];
+        $handler = function(PushEvent $event) use (&$jobs) {
+            $jobs[] = $event->job;
+        };
+        Craft::$app->getQueue()->on(Queue::EVENT_AFTER_PUSH, $handler);
+        try {
+            $callback();
+        } finally {
+            Craft::$app->getQueue()->off(Queue::EVENT_AFTER_PUSH, $handler);
+        }
+
+        return $jobs;
     }
 }

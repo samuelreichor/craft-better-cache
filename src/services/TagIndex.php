@@ -75,6 +75,14 @@ class TagIndex extends Component
     /**
      * @param int[] $pageIds
      */
+    public function markStale(array $pageIds): void
+    {
+        Db::update(Constants::TABLE_PAGES, ['stale' => true], ['id' => $pageIds]);
+    }
+
+    /**
+     * @param int[] $pageIds
+     */
     public function deletePages(array $pageIds): void
     {
         Db::delete(Constants::TABLE_PAGES, ['id' => $pageIds]);
