@@ -16,6 +16,7 @@ use samuelreichor\betterCache\services\Cacheability;
 use samuelreichor\betterCache\services\Capture;
 use samuelreichor\betterCache\services\Invalidation;
 use samuelreichor\betterCache\services\TagIndex;
+use samuelreichor\betterCache\services\Warming;
 use yii\base\Event;
 use yii\base\InvalidConfigException;
 use yii\queue\Queue;
@@ -29,6 +30,7 @@ use yii\queue\Queue;
  * @property-read Capture $capture
  * @property-read Invalidation $invalidation
  * @property-read TagIndex $tagIndex
+ * @property-read Warming $warming
  * @author Samuel Reichör <samuelreichor@gmail.com>
  * @copyright Samuel Reichör
  * @license https://craftcms.github.io/license/ Craft License
@@ -48,6 +50,7 @@ class BetterCache extends Plugin
                 'capture' => Capture::class,
                 'invalidation' => Invalidation::class,
                 'tagIndex' => TagIndex::class,
+                'warming' => Warming::class,
             ],
         ];
     }

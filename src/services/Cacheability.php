@@ -49,6 +49,11 @@ class Cacheability extends Component
         return new PageVariant($site->id, $path, $query);
     }
 
+    public function getRefreshStrategy(PageVariant $variant): string
+    {
+        return $this->settings()->refreshStrategy;
+    }
+
     public function isStorable(Response $response): bool
     {
         if (Craft::$app->getUser()->getIdentity() !== null) {
@@ -144,7 +149,7 @@ class Cacheability extends Component
         return $fullPath;
     }
 
-    private function isIncludedUri(string $path, Site $site): bool
+    public function isIncludedUri(string $path, Site $site): bool
     {
         $settings = $this->settings();
 

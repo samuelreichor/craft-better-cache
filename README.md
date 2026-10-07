@@ -31,7 +31,7 @@ composer require samuelreichor/craft-better-cache
 
 ## Server Configuration
 
-With the File storage driver, Cached Pages are written to `@webroot/cache/better-cache/{host}/{uri}/{query}/index.html` (see the `cachePath` setting). The web server serves them without booting Craft. Only GET requests are served from the cache; everything else falls through to Craft.
+With the File storage driver, Cached Pages are written to `@webroot/cache/better-cache/{host}/{uri}/{query}/index.html` (see the `cachePath` setting). The web server serves them without booting Craft. Only GET requests without the `X-Better-Cache-Bypass` header are served from the cache; everything else falls through to Craft. Better Cache sends that header when it re-renders or warms pages.
 
 The query string becomes a directory below the URI, so a cached `/blog/archive` is also served for `/blog?archive`.
 
@@ -43,6 +43,9 @@ Replace the `try_files` line of your `location /` block:
 set $better_cache_file /better-cache-miss;
 if ($request_method = GET) {
     set $better_cache_file /cache/better-cache/$host/$uri/$args/index.html;
+}
+if ($http_x_better_cache_bypass) {
+    set $better_cache_file /better-cache-miss;
 }
 
 location / {
@@ -57,6 +60,7 @@ Add these rules to `web/.htaccess`, before Craft's own rewrite rules:
 ```apache
 RewriteEngine On
 RewriteCond %{REQUEST_METHOD} GET
+RewriteCond %{HTTP:X-Better-Cache-Bypass} ^$
 RewriteCond %{DOCUMENT_ROOT}/cache/better-cache/%{HTTP_HOST}%{REQUEST_URI}/%{QUERY_STRING}/index.html -s
 RewriteRule .* /cache/better-cache/%{HTTP_HOST}%{REQUEST_URI}/%{QUERY_STRING}/index.html [L]
 ```
