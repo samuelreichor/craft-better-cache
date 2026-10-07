@@ -31,7 +31,21 @@ class Settings extends Model
      */
     public array $excludedUriPatterns = [];
 
-    public bool $cacheQueryStrings = false;
+    /**
+     * Regex patterns for query param names, keyed by site handle like the URI patterns. Each included
+     * param makes its own Page Variant. A param that is neither included nor excluded makes the request
+     * uncacheable, so a template that reads it cannot put its output into the shared page.
+     *
+     * @var array<string, string[]>
+     */
+    public array $includedQueryParams = [];
+
+    /**
+     * Ignored as if they were not there.
+     *
+     * @var array<string, string[]>
+     */
+    public array $excludedQueryParams = [Constants::ALL_SITES_KEY => ['gclid', 'fbclid', 'utm_.*']];
 
     public int $warmConcurrency = 3;
 
@@ -52,10 +66,10 @@ class Settings extends Model
     protected function defineRules(): array
     {
         return [
-            [['enabled', 'cacheQueryStrings'], 'boolean'],
+            ['enabled', 'boolean'],
             ['storageDriver', 'in', 'range' => Constants::STORAGE_DRIVERS],
             ['refreshStrategy', 'in', 'range' => Constants::REFRESH_STRATEGIES],
-            [['includedUriPatterns', 'excludedUriPatterns'], 'validateUriPatterns'],
+            [['includedUriPatterns', 'excludedUriPatterns', 'includedQueryParams', 'excludedQueryParams'], 'validateUriPatterns'],
             ['warmConcurrency', 'integer', 'min' => 1],
             ['cdnMaxAge', 'integer', 'min' => 0],
             ['cachePath', 'required'],
