@@ -4,7 +4,9 @@ namespace samuelreichor\betterCache\services;
 
 use Craft;
 use craft\base\ElementInterface;
+use craft\elements\db\AddressQuery;
 use craft\elements\db\ElementQuery;
+use craft\elements\db\EntryQuery;
 use craft\events\DefineValueEvent;
 use craft\helpers\ArrayHelper;
 use craft\web\Request;
@@ -89,12 +91,18 @@ class Capture extends Component
      */
     public function defineQueryTags(DefineValueEvent $event): void
     {
+        /** @var ElementQuery $query */
+        $query = $event->sender;
+
+        // Saving a nested element always invalidates its owner, so the field tag would only add every other owner's page.
+        if (($query instanceof EntryQuery || $query instanceof AddressQuery) && ($query->ownerId || $query->primaryOwnerId)) {
+            $event->value = array_values(array_filter($event->value, fn(string $tag) => !str_starts_with($tag, 'field:')));
+        }
+
         if ($event->value) {
             return;
         }
 
-        /** @var ElementQuery $query */
-        $query = $event->sender;
         $ids = $this->findFixedIds($query->where);
         if ($ids === null) {
             return;
