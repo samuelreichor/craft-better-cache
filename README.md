@@ -2,6 +2,38 @@
 
 Easy scalable static caching for Craft CMS
 
+## Better Cache vs. Blitz
+
+Measured on a real Craft site with 1000 cached pages, same server, 3 concurrent renders, Blitz in "clear and generate" mode.
+
+```
+Time until all refresh work is done (shorter is better)
+
+Warm cache    Better Cache  ███████ 168 s, 1.8× faster
+              Blitz         ████████████ 305 s
+
+Edit article  Better Cache  ██████ 146 s, 3.6× faster
+              Blitz         █████████████████████ 527 s
+
+New article   Better Cache  ██████ 154 s, 3.7× faster
+              Blitz         ███████████████████████ 571 s
+
+Edit globals  Better Cache  ████████ 206 s, 4.8× faster
+              Blitz         ████████████████████████████████████████ 987 s
+```
+
+**Pages re-rendered**
+
+| | Pages that changed | Extra pages: Better Cache | Extra pages: Blitz |
+|---|---|---|---|
+| Edit article | 1 | 635 | 551 |
+| New article | 565 | 71 | 1 |
+| Edit globals | 978 | 0 | 0 |
+
+Dependency tracking takes 21 MB with Better Cache and 52 MB with Blitz. "Edit globals" was measured by editing the site navigation, which appears on every page like globals do.
+
+Better Cache invalidates by section instead of tracking every query, so an edit also re-renders pages that merely list that section. Even with more pages to render, it finishes several times sooner. No page was left stale in any run.
+
 ## Requirements
 
 This plugin requires Craft CMS 5 or later, and PHP 8.2 or later.
