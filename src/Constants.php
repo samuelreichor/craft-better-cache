@@ -28,6 +28,12 @@ final class Constants
     ];
 
     public const ALL_SITES_KEY = '*';
+    public const SITE_PATTERN_SETTINGS = [
+        'includedUriPatterns',
+        'excludedUriPatterns',
+        'includedQueryParams',
+        'excludedQueryParams',
+    ];
 
     // Craft announces the bare tag when fields or sites change. Global sets are memoized per request,
     // so pages using them may not carry their tags.
@@ -74,6 +80,8 @@ final class Constants
     public const MESSAGE_URL_CLEARED = 'Cleared {url}.';
     public const MESSAGE_NO_SITE_FOR_URL = 'No site matches {url}.';
     public const MESSAGE_WARMING_QUEUED = 'Warming queued.';
+
+    public const SAVE_SETTINGS_ACTION = self::HANDLE . '/settings/save';
 
     public const CSRF_ACTION = self::HANDLE . '/dynamic/csrf';
     public const INCLUDE_ACTION = self::HANDLE . '/dynamic/include';

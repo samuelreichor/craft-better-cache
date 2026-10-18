@@ -1,4 +1,270 @@
 {# @var plugin \samuelreichor\betterCache\BetterCache #}
 {# @var settings \samuelreichor\betterCache\models\Settings #}
+{% requireAdmin false %}
 
-<p>{{ 'Better Cache is configured in {file}.'|t('better-cache', { file: '<code>config/better-cache.php</code>' })|raw }}</p>
+{% extends '_layouts/cp' %}
+{% import '_includes/forms' as forms %}
+
+{% set title = plugin.name %}
+{% set docTitle = title ~ ' - ' ~ 'Plugins'|t('app') %}
+{% set readOnly = readOnly ?? false %}
+{% set fullPageForm = not readOnly %}
+
+{% set crumbs = [
+  { label: 'Settings'|t('app'), url: url('settings') },
+  { label: 'Plugins'|t('app'), url: url('settings/plugins') },
+] %}
+
+{% set formActions = [
+  {
+    label: 'Save and continue editing'|t('app'),
+    redirect: "settings/plugins/#{plugin.handle}"|hash,
+    shortcut: true,
+    retainScroll: true,
+  },
+] %}
+
+{% if readOnly %}
+  {% set contentNotice = readOnlyNotice() %}
+{% endif %}
+
+{% macro configWarning(setting) -%}
+  {{ 'This is being overridden by the {setting} config setting in {file}.'|t('better-cache', {
+    setting: "<code>#{setting}</code>",
+    file: '<code>config/better-cache.php</code>',
+  })|raw }}
+{%- endmacro %}
+{% from _self import configWarning %}
+
+{% set tabFields = {
+  general: ['enabled', 'refreshStrategy', 'warmConcurrency', 'includedUriPatterns', 'excludedUriPatterns'],
+  queryStrings: ['includedQueryParams', 'excludedQueryParams'],
+  storage: ['storageDriver', 'cachePath'],
+  cdn: ['cdnMaxAge', 'cacheTagHeader', 'purger'],
+} %}
+{% set tabs = {} %}
+{% for id, label in {
+  general: 'General'|t('better-cache'),
+  queryStrings: 'Query Strings'|t('better-cache'),
+  storage: 'Storage'|t('better-cache'),
+  cdn: 'CDN'|t('better-cache'),
+} %}
+  {% set tabs = tabs|merge({
+    (id): {
+      label: label,
+      url: "##{id}",
+      class: tabFields[id]|filter(name => settings.hasErrors(name)) ? 'error',
+    },
+  }) %}
+{% endfor %}
+
+{% set siteColumn = craft.app.getIsMultiSite() ? {
+  site: {
+    type: 'select',
+    heading: 'Site'|t('app'),
+    options: [{ value: '*', label: 'All Sites'|t('better-cache') }]|merge(siteOptions),
+    thin: true,
+  },
+} : {} %}
+{% set uriPatternColumns = siteColumn|merge({
+  pattern: {
+    type: 'singleline',
+    heading: 'URI Pattern'|t('better-cache'),
+    placeholder: '^blog/',
+    code: true,
+  },
+}) %}
+{% set queryParamColumns = siteColumn|merge({
+  pattern: {
+    type: 'singleline',
+    heading: 'Query Param'|t('better-cache'),
+    placeholder: '^page$',
+    code: true,
+  },
+}) %}
+
+{% block content %}
+  {% if not readOnly %}
+    {{ actionInput(constant('samuelreichor\\betterCache\\Constants::SAVE_SETTINGS_ACTION')) }}
+    {{ redirectInput('settings') }}
+  {% endif %}
+
+  <div id="general">
+    {{ forms.lightswitchField({
+      first: true,
+      label: 'Caching Enabled'|t('better-cache'),
+      instructions: 'Whether pages are cached. Usually set per environment in the config file.'|t('better-cache'),
+      warning: config.enabled is defined ? configWarning('enabled'),
+      name: 'settings[enabled]',
+      on: settings.enabled,
+      errors: settings.getErrors('enabled'),
+      disabled: readOnly,
+    }) }}
+
+    {{ forms.selectField({
+      label: 'Refresh Strategy'|t('better-cache'),
+      instructions: 'What happens to a cached page when its content changes.'|t('better-cache'),
+      warning: config.refreshStrategy is defined ? configWarning('refreshStrategy'),
+      name: 'settings[refreshStrategy]',
+      options: [
+        { value: 'clear', label: 'Clear: delete the page, the next visitor renders it'|t('better-cache') },
+        { value: 'expire', label: 'Expire: keep serving the stale page while it is re-rendered'|t('better-cache') },
+        { value: 'refresh', label: 'Refresh: delete the page and re-render it right away'|t('better-cache') },
+      ],
+      value: settings.refreshStrategy,
+      errors: settings.getErrors('refreshStrategy'),
+      disabled: readOnly,
+    }) }}
+
+    {{ forms.textField({
+      label: 'Warm Concurrency'|t('better-cache'),
+      instructions: 'How many pages are rendered at the same time when warming or re-rendering.'|t('better-cache'),
+      warning: config.warmConcurrency is defined ? configWarning('warmConcurrency'),
+      name: 'settings[warmConcurrency]',
+      value: settings.warmConcurrency,
+      type: 'number',
+      min: 1,
+      size: 4,
+      errors: settings.getErrors('warmConcurrency'),
+      disabled: readOnly,
+    }) }}
+
+    {{ forms.editableTableField({
+      label: 'Included URI Patterns'|t('better-cache'),
+      instructions: 'Only URIs matching one of these regular expressions are cached. Nothing is cached without one, `.*` caches everything.'|t('better-cache'),
+      warning: config.includedUriPatterns is defined ? configWarning('includedUriPatterns'),
+      id: 'includedUriPatterns',
+      name: 'settings[includedUriPatterns]',
+      cols: uriPatternColumns,
+      rows: rows.includedUriPatterns,
+      addRowLabel: 'Add a URI pattern'|t('better-cache'),
+      allowAdd: true,
+      allowDelete: true,
+      allowReorder: true,
+      errors: settings.getErrors('includedUriPatterns'),
+      static: readOnly,
+    }) }}
+
+    {{ forms.editableTableField({
+      label: 'Excluded URI Patterns'|t('better-cache'),
+      instructions: 'URIs matching one of these regular expressions are never cached, even when they are included.'|t('better-cache'),
+      warning: config.excludedUriPatterns is defined ? configWarning('excludedUriPatterns'),
+      id: 'excludedUriPatterns',
+      name: 'settings[excludedUriPatterns]',
+      cols: uriPatternColumns,
+      rows: rows.excludedUriPatterns,
+      addRowLabel: 'Add a URI pattern'|t('better-cache'),
+      allowAdd: true,
+      allowDelete: true,
+      allowReorder: true,
+      errors: settings.getErrors('excludedUriPatterns'),
+      static: readOnly,
+    }) }}
+  </div>
+
+  <div id="queryStrings" class="hidden">
+    <p>{{ 'URLs with a query string are only cached when every param is either included or excluded. Both are regular expressions on the param name.'|t('better-cache') }}</p>
+
+    {{ forms.editableTableField({
+      label: 'Included Query Params'|t('better-cache'),
+      instructions: 'Each value of an included param is cached as its own page, e.g. `/events?category=5` and `/events?category=6`.'|t('better-cache'),
+      warning: config.includedQueryParams is defined ? configWarning('includedQueryParams'),
+      id: 'includedQueryParams',
+      name: 'settings[includedQueryParams]',
+      cols: queryParamColumns,
+      rows: rows.includedQueryParams,
+      addRowLabel: 'Add a query param'|t('better-cache'),
+      allowAdd: true,
+      allowDelete: true,
+      allowReorder: true,
+      errors: settings.getErrors('includedQueryParams'),
+      static: readOnly,
+    }) }}
+
+    {{ forms.editableTableField({
+      label: 'Excluded Query Params'|t('better-cache'),
+      instructions: 'Excluded params are ignored, so `/events?utm_source=newsletter` gets the page cached for `/events`.'|t('better-cache'),
+      warning: config.excludedQueryParams is defined ? configWarning('excludedQueryParams'),
+      id: 'excludedQueryParams',
+      name: 'settings[excludedQueryParams]',
+      cols: queryParamColumns,
+      rows: rows.excludedQueryParams,
+      addRowLabel: 'Add a query param'|t('better-cache'),
+      allowAdd: true,
+      allowDelete: true,
+      allowReorder: true,
+      errors: settings.getErrors('excludedQueryParams'),
+      static: readOnly,
+    }) }}
+  </div>
+
+  <div id="storage" class="hidden">
+    {{ forms.selectField({
+      label: 'Storage Driver'|t('better-cache'),
+      instructions: 'Where cached pages are stored and who serves them.'|t('better-cache'),
+      warning: config.storageDriver is defined ? configWarning('storageDriver'),
+      name: 'settings[storageDriver]',
+      options: [
+        { value: 'file', label: 'File: static files served by the web server'|t('better-cache') },
+        { value: 'craftCache', label: 'Craft Cache: Craft’s cache component, shared across servers'|t('better-cache') },
+      ],
+      value: settings.storageDriver,
+      toggle: true,
+      targetPrefix: 'storage-driver-',
+      errors: settings.getErrors('storageDriver'),
+      disabled: readOnly,
+    }) }}
+
+    <div id="storage-driver-file" {{ settings.storageDriver != 'file' ? 'class="hidden"' }}>
+      {{ forms.autosuggestField({
+        label: 'Cache Path'|t('better-cache'),
+        instructions: 'The directory the cached pages are written to. Your web server config must point to it.'|t('better-cache'),
+        warning: config.cachePath is defined ? configWarning('cachePath'),
+        name: 'settings[cachePath]',
+        value: settings.cachePath,
+        suggestAliases: true,
+        code: true,
+        errors: settings.getErrors('cachePath'),
+        disabled: readOnly,
+      }) }}
+    </div>
+  </div>
+
+  <div id="cdn" class="hidden">
+    {{ forms.textField({
+      label: 'Purger'|t('better-cache'),
+      instructions: 'A class implementing `samuelreichor\\betterCache\\purgers\\PurgerInterface`. CDN headers are only sent when a purger is set.'|t('better-cache'),
+      warning: config.purger is defined ? configWarning('purger'),
+      name: 'settings[purger]',
+      value: settings.purger,
+      placeholder: 'modules\\MyPurger',
+      code: true,
+      errors: settings.getErrors('purger'),
+      disabled: readOnly,
+    }) }}
+
+    {{ forms.textField({
+      label: 'CDN Max Age'|t('better-cache'),
+      instructions: 'Seconds a CDN may keep a cached page, sent as `s-maxage`.'|t('better-cache'),
+      warning: config.cdnMaxAge is defined ? configWarning('cdnMaxAge'),
+      name: 'settings[cdnMaxAge]',
+      value: settings.cdnMaxAge,
+      type: 'number',
+      min: 0,
+      size: 10,
+      errors: settings.getErrors('cdnMaxAge'),
+      disabled: readOnly,
+    }) }}
+
+    {{ forms.textField({
+      label: 'Cache Tag Header'|t('better-cache'),
+      instructions: 'The header carrying the cache tags: `Cache-Tag` for Cloudflare, `Surrogate-Key` for Fastly. Leave empty to send none.'|t('better-cache'),
+      warning: config.cacheTagHeader is defined ? configWarning('cacheTagHeader'),
+      name: 'settings[cacheTagHeader]',
+      value: settings.cacheTagHeader,
+      code: true,
+      errors: settings.getErrors('cacheTagHeader'),
+      disabled: readOnly,
+    }) }}
+  </div>
+{% endblock %}

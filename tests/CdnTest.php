@@ -84,6 +84,21 @@ class CdnTest extends TestCase
         $this->assertSame([], RecordingPurger::$calls);
     }
 
+    public function testPurgerMustImplementTheInterface(): void
+    {
+        $this->settings()->purger = RecordingPurger::class;
+        $this->assertTrue($this->settings()->validate(['purger']));
+
+        $this->settings()->purger = self::class;
+        $this->assertFalse($this->settings()->validate(['purger']));
+
+        $this->settings()->purger = 'modules\\Missing';
+        $this->assertFalse($this->settings()->validate(['purger']));
+
+        $this->settings()->purger = null;
+        $this->assertTrue($this->settings()->validate(['purger']));
+    }
+
     public function testWithoutPurgerNothingHappens(): void
     {
         $this->settings()->purger = null;
