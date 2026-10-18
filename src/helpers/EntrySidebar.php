@@ -33,10 +33,10 @@ final class EntrySidebar
             'label' => Craft::t(Constants::HANDLE, 'Status'),
         ]);
         if ($state !== null) {
-            $content .= Html::tag('div', Html::button(Craft::t(Constants::HANDLE, 'Clear cached page'), [
+            $content .= Html::tag('div', Html::tag('div', Html::button(Craft::t(Constants::HANDLE, 'Clear cached page'), [
                 'class' => 'btn small',
                 Constants::SIDEBAR_URL_ATTRIBUTE => $url,
-            ]), ['class' => 'field']);
+            ]), ['class' => 'input']), ['class' => 'field']);
             self::registerScript($notCached);
         }
 
