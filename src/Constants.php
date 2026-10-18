@@ -28,6 +28,7 @@ final class Constants
     ];
 
     public const ALL_SITES_KEY = '*';
+    public const SITE_TAG_SEPARATOR = '@site:';
     public const SITE_PATTERN_SETTINGS = [
         'includedUriPatterns',
         'excludedUriPatterns',
