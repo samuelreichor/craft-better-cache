@@ -7,6 +7,7 @@ use craft\base\Model;
 use samuelreichor\betterCache\Constants;
 use samuelreichor\betterCache\helpers\CachePath;
 use samuelreichor\betterCache\helpers\UriPattern;
+use samuelreichor\betterCache\purgers\PurgerInterface;
 
 /**
  * Better Cache settings
@@ -74,6 +75,7 @@ class Settings extends Model
             ['cdnMaxAge', 'integer', 'min' => 0],
             ['cachePath', 'required'],
             ['cachePath', 'validateCachePath'],
+            ['purger', 'validatePurger'],
         ];
     }
 
@@ -81,6 +83,13 @@ class Settings extends Model
     {
         if (!CachePath::isSafe($this->$attribute)) {
             $this->addError($attribute, Craft::t(Constants::HANDLE, 'The cache path must not be the webroot, the project root, one of Craft’s own directories or a parent of them.'));
+        }
+    }
+
+    public function validatePurger(string $attribute): void
+    {
+        if (!is_subclass_of($this->$attribute, PurgerInterface::class)) {
+            $this->addError($attribute, Craft::t(Constants::HANDLE, 'The purger must be a class that implements {interface}.', ['interface' => PurgerInterface::class]));
         }
     }
 

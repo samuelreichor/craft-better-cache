@@ -18,6 +18,7 @@ use craft\services\Elements;
 use craft\services\Sites;
 use craft\services\Utilities;
 use craft\utilities\ClearCaches;
+use craft\web\Controller;
 use craft\web\Request;
 use craft\web\Response;
 use craft\web\twig\variables\CraftVariable;
@@ -25,6 +26,7 @@ use samuelreichor\betterCache\drivers\CraftCacheDriver;
 use samuelreichor\betterCache\drivers\FileDriver;
 use samuelreichor\betterCache\drivers\StorageDriverInterface;
 use samuelreichor\betterCache\helpers\EntrySidebar;
+use samuelreichor\betterCache\helpers\SiteRows;
 use samuelreichor\betterCache\models\Settings;
 use samuelreichor\betterCache\services\Cacheability;
 use samuelreichor\betterCache\services\Capture;
@@ -41,6 +43,7 @@ use yii\base\Event;
 use yii\base\InvalidConfigException;
 use yii\di\Instance;
 use yii\queue\Queue;
+use yii\web\Response as YiiResponse;
 
 /**
  * Better Cache plugin
@@ -64,6 +67,7 @@ class BetterCache extends Plugin
 {
     public string $schemaVersion = '1.0.0';
     public bool $hasCpSettings = true;
+    public bool $hasReadOnlyCpSettings = true;
 
     /**
      * Set through `pluginConfigs` in `config/app.php`, like Blitz.
@@ -122,11 +126,39 @@ class BetterCache extends Plugin
         return Craft::createObject(Settings::class);
     }
 
-    protected function settingsHtml(): ?string
+    public function getSettingsResponse(): mixed
     {
-        return Craft::$app->view->renderTemplate(Constants::HANDLE . '/_settings.twig', [
+        return $this->renderSettings(false);
+    }
+
+    public function getReadOnlySettingsResponse(): mixed
+    {
+        return $this->renderSettings(true);
+    }
+
+    private function renderSettings(bool $readOnly): YiiResponse
+    {
+        $siteOptions = [];
+        foreach (Craft::$app->getSites()->getAllSites(true) as $site) {
+            $siteOptions[] = ['value' => $site->handle, 'label' => $site->name];
+        }
+
+        $settings = $this->getSettings();
+        $rows = [];
+        foreach (Constants::SITE_PATTERN_SETTINGS as $name) {
+            $rows[$name] = SiteRows::fromPatterns($settings->$name);
+        }
+
+        /** @var Controller $controller */
+        $controller = Craft::$app->controller;
+
+        return $controller->renderTemplate(Constants::HANDLE . '/_settings.twig', [
             'plugin' => $this,
-            'settings' => $this->getSettings(),
+            'settings' => $settings,
+            'rows' => $rows,
+            'config' => Craft::$app->getConfig()->getConfigFromFile(Constants::HANDLE),
+            'siteOptions' => $siteOptions,
+            'readOnly' => $readOnly,
         ]);
     }
 
