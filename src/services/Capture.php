@@ -14,6 +14,7 @@ use craft\web\Response;
 use DateTime;
 use samuelreichor\betterCache\BetterCache;
 use samuelreichor\betterCache\Constants;
+use samuelreichor\betterCache\helpers\SiteTags;
 use samuelreichor\betterCache\models\PageVariant;
 use Throwable;
 use yii\base\Component;
@@ -100,6 +101,7 @@ class Capture extends Component
         }
 
         if ($event->value) {
+            $event->value = $this->scopeToSite($event->value, $query);
             return;
         }
 
@@ -111,6 +113,26 @@ class Capture extends Component
         $event->value = $ids
             ? array_map(fn(int $id) => "element::$id", $ids)
             : [Constants::NO_ELEMENTS_TAG];
+    }
+
+    /**
+     * A single-site query only finds elements that exist on that site, so saving an element can only change its
+     * result if the element is or was on that site. Absolute tags (`element::…`) are left alone.
+     *
+     * @param string[] $tags
+     * @return string[]
+     */
+    private function scopeToSite(array $tags, ElementQuery $query): array
+    {
+        $siteId = is_array($query->siteId) && count($query->siteId) === 1 ? reset($query->siteId) : $query->siteId;
+        if (!is_numeric($siteId)) {
+            return $tags;
+        }
+
+        return array_map(
+            fn(string $tag) => str_starts_with($tag, 'element::') ? $tag : SiteTags::scope($tag, (int)$siteId),
+            $tags,
+        );
     }
 
     /**

@@ -27,6 +27,7 @@ use samuelreichor\betterCache\drivers\FileDriver;
 use samuelreichor\betterCache\drivers\StorageDriverInterface;
 use samuelreichor\betterCache\helpers\EntrySidebar;
 use samuelreichor\betterCache\helpers\SiteRows;
+use samuelreichor\betterCache\helpers\SiteTags;
 use samuelreichor\betterCache\models\Settings;
 use samuelreichor\betterCache\services\Cacheability;
 use samuelreichor\betterCache\services\Capture;
@@ -210,7 +211,8 @@ class BetterCache extends Plugin
             ) {
                 return;
             }
-            $this->invalidation->addTags($event->tags);
+            $siteIds = $this->elementChanges->getAffectedSiteIds($event->element) ?? Craft::$app->getSites()->getAllSiteIds(true);
+            $this->invalidation->addTags(SiteTags::withSiteVariants($event->tags, $siteIds));
         });
 
         // A queue worker's request never ends, so resolve the tags after every job too.

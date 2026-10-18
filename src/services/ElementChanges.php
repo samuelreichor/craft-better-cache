@@ -4,6 +4,8 @@ namespace samuelreichor\betterCache\services;
 
 use Craft;
 use craft\base\ElementInterface;
+use craft\db\Query;
+use craft\db\Table;
 use craft\helpers\ElementHelper;
 use samuelreichor\betterCache\Constants;
 use WeakMap;
@@ -16,15 +18,26 @@ class ElementChanges extends Component
      */
     private WeakMap $originals;
 
+    /**
+     * @var WeakMap<ElementInterface, int[]>
+     */
+    private WeakMap $siteIdsBefore;
+
     public function init(): void
     {
         parent::init();
         $this->originals = new WeakMap();
+        $this->siteIdsBefore = new WeakMap();
     }
 
     public function beforeSave(ElementInterface $element): void
     {
-        if ($element->id === null || $element->getIsDraft() || $element->getIsRevision()) {
+        if ($element->getIsDraft() || $element->getIsRevision()) {
+            return;
+        }
+
+        $this->siteIdsBefore[$element] = $element->id === null ? [] : $this->siteIds($element->id);
+        if ($element->id === null) {
             return;
         }
 
@@ -36,7 +49,21 @@ class ElementChanges extends Component
 
     public function afterSave(ElementInterface $element): void
     {
-        unset($this->originals[$element]);
+        unset($this->originals[$element], $this->siteIdsBefore[$element]);
+    }
+
+    /**
+     * Sites the element was on before its save or is on now. Null outside of a save, where the sites it left are unknown.
+     *
+     * @return int[]|null
+     */
+    public function getAffectedSiteIds(?ElementInterface $element): ?array
+    {
+        if ($element?->id === null || !isset($this->siteIdsBefore[$element])) {
+            return null;
+        }
+
+        return array_values(array_unique([...$this->siteIdsBefore[$element], ...$this->siteIds($element->id)]));
     }
 
     /**
@@ -61,6 +88,18 @@ class ElementChanges extends Component
         }
 
         return !in_array($status, Constants::REFRESHABLE_STATUSES, true) || $this->isUnchanged($element);
+    }
+
+    /**
+     * @return int[]
+     */
+    private function siteIds(int $elementId): array
+    {
+        return array_map('intval', (new Query())
+            ->select('siteId')
+            ->from(Table::ELEMENTS_SITES)
+            ->where(['elementId' => $elementId])
+            ->column());
     }
 
     /**

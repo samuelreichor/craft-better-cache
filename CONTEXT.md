@@ -31,7 +31,7 @@ _Avoid_: Island, hole, ESI
 ### Dependencies
 
 **Cache Tag**:
-A tag Craft itself collects while a page renders (an element, a section, an element type). Better Cache never invents its own.
+A tag Craft itself collects while a page renders (an element, a section, an element type). Better Cache never invents its own, it only appends the site (`@site:{id}`) to the tags of a single-site query.
 _Avoid_: Dependency, surrogate key
 
 **Tag Index**:
