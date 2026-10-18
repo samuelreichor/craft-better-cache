@@ -107,6 +107,11 @@ class Capture extends Component
 
         $ids = $this->findFixedIds($query->where);
         if ($ids === null) {
+            // Craft adds the plain wildcard only for an empty value, so a single-site query sets its own.
+            $wildcard = $this->scopeToSite(['*'], $query);
+            if ($wildcard !== ['*']) {
+                $event->value = $wildcard;
+            }
             return;
         }
 

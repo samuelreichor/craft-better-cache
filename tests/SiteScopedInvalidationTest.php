@@ -48,6 +48,41 @@ class SiteScopedInvalidationTest extends TestCase
         $this->assertNotContains('element::' . Entry::class . "::section:$sectionId", $query->getCacheTags());
     }
 
+    public function testSingleSiteQueryWithoutSectionGetsTheSiteWildcard(): void
+    {
+        $query = Entry::find()->siteId($this->siteA->id);
+        $query->all();
+
+        $this->assertContains('element::' . Entry::class . "::*@site:{$this->siteA->id}", $query->getCacheTags());
+        $this->assertNotContains('element::' . Entry::class . '::*', $query->getCacheTags());
+    }
+
+    public function testSavingEntryKeepsSectionlessListsOfSitesItIsNotOn(): void
+    {
+        $entry = $this->createNewsEntry($this->siteA);
+        $this->capturePushedJobs(fn() => BetterCache::getInstance()->invalidation->flush());
+        foreach ([$this->siteA, $this->siteB] as $site) {
+            $query = Entry::find()->siteId($site->id);
+            $query->all();
+            $this->store(new PageVariant($site->id, "all-entries-on-$site->handle"), $query->getCacheTags());
+        }
+
+        $entry->title = 'Changed';
+        $this->assertTrue(Craft::$app->getElements()->saveElement($entry));
+        $this->flushInvalidation();
+
+        $this->assertCleared("all-entries-on-{$this->siteA->handle}");
+        $this->assertKept("all-entries-on-{$this->siteB->handle}");
+    }
+
+    public function testMultiSiteQueryWithoutSectionKeepsThePlainWildcard(): void
+    {
+        $query = Entry::find()->siteId('*');
+        $query->all();
+
+        $this->assertContains('element::' . Entry::class . '::*', $query->getCacheTags());
+    }
+
     public function testMultiSiteQueryTagsStayPlain(): void
     {
         $query = Entry::find()->section('news')->siteId('*');
