@@ -57,8 +57,8 @@ final class Constants
     // Makes the web server skip the Cached Page, so re-renders and warming reach Craft.
     public const BYPASS_HEADER = 'X-Better-Cache-Bypass';
 
-    // Small batches keep each render job well below the queue's time to reserve.
-    public const RENDER_BATCH_SIZE = 50;
+    // The queue boots Craft for every job (about 0.7 s), so a batch is as large as the queue's time to reserve safely allows.
+    public const RENDER_BATCH_SIZE = 200;
     public const RENDER_TIMEOUT = 30;
 
     // Clearing deletes the whole cache path, so it must not be one of these or a parent of them.
