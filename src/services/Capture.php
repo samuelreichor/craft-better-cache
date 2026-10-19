@@ -5,6 +5,7 @@ namespace samuelreichor\betterCache\services;
 use Craft;
 use craft\base\ElementInterface;
 use craft\elements\db\AddressQuery;
+use craft\elements\db\CategoryQuery;
 use craft\elements\db\ElementQuery;
 use craft\elements\db\EntryQuery;
 use craft\events\DefineValueEvent;
@@ -105,6 +106,12 @@ class Capture extends Component
             return;
         }
 
+        $structureTags = $this->findStructureTags($query);
+        if ($structureTags) {
+            $event->value = $this->scopeToSite($structureTags, $query);
+            return;
+        }
+
         $ids = $this->findFixedIds($query->where);
         if ($ids === null) {
             // Craft adds the plain wildcard only for an empty value, so a single-site query sets its own.
@@ -138,6 +145,43 @@ class Capture extends Component
             fn(string $tag) => str_starts_with($tag, 'element::') ? $tag : SiteTags::scope($tag, (int)$siteId),
             $tags,
         );
+    }
+
+    /**
+     * Craft tags structure queries like `entry.children` without their section, so every entry save would match them.
+     * A structure belongs to a single section or category group, whose tag every save of its elements carries.
+     *
+     * @return string[]
+     */
+    private function findStructureTags(ElementQuery $query): array
+    {
+        $structureId = $query->structureId;
+        foreach (['ancestorOf', 'descendantOf', 'siblingOf', 'prevSiblingOf', 'nextSiblingOf', 'positionedBefore', 'positionedAfter'] as $param) {
+            if (!$structureId && $query->$param instanceof ElementInterface) {
+                $structureId = $query->$param->structureId;
+            }
+        }
+        if (!$structureId) {
+            return [];
+        }
+
+        if ($query instanceof EntryQuery) {
+            $owners = Craft::$app->getEntries()->getAllSections();
+            $prefix = 'section';
+        } elseif ($query instanceof CategoryQuery) {
+            $owners = Craft::$app->getCategories()->getAllGroups();
+            $prefix = 'group';
+        } else {
+            return [];
+        }
+
+        foreach ($owners as $owner) {
+            if ((int)$owner->structureId === (int)$structureId) {
+                return ["$prefix:$owner->id"];
+            }
+        }
+
+        return [];
     }
 
     /**
