@@ -3,11 +3,12 @@
   "description": "Easy scalable static caching for Craft CMS",
   "type": "craft-plugin",
   "license": "proprietary",
+  "version": "1.0.0",
   "support": {
     "email": "samuelreichor@gmail.com",
     "issues": "https://github.com/samuelreichor/craft-better-cache/issues?state=open",
     "source": "https://github.com/samuelreichor/craft-better-cache",
-    "docs": "https://github.com/samuelreichor/craft-better-cache",
+    "docs": "https://samuelreichor.at/libraries/craft-better-cache",
     "rss": "https://github.com/samuelreichor/craft-better-cache/releases.atom"
   },
   "require": {
@@ -29,7 +30,7 @@
     "handle": "better-cache",
     "name": "Better Cache",
     "developer": "Samuel Reichör",
-    "documentationUrl": "https://github.com/samuelreichor/craft-better-cache",
+    "documentationUrl": "https://samuelreichor.at/libraries/craft-better-cache",
     "class": "samuelreichor\\betterCache\\BetterCache"
   },
   "scripts": {

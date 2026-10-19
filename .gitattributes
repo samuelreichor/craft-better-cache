@@ -5,6 +5,7 @@
 CHANGELOG.md export-ignore
 README.md export-ignore
 SECURITY.md export-ignore
+CLAUDE.md export-ignore
 composer.lock export-ignore
 ecs.php export-ignore
 package-lock.json export-ignore
